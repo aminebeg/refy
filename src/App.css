@@ -18,7 +18,7 @@
   padding: var(--spacing-xl);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xl);
+  gap: var(--spacing-lg);
   position: relative;
 }
 
@@ -32,7 +32,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(15, 23, 42, 0.6);
+  /* Darker overlay */
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -44,36 +45,39 @@
 
 .drag-overlay-content {
   text-align: center;
-  padding: var(--spacing-3xl);
-  background: var(--bg-elevated);
-  border: 3px dashed var(--primary-500);
-  border-radius: var(--radius-lg);
+  padding: var(--spacing-2xl);
+  background: var(--bg-secondary);
+  border: 2px dashed var(--primary-500);
+  border-radius: var(--radius-xl);
   color: var(--text-primary);
   max-width: 400px;
+  box-shadow: var(--shadow-xl);
+  transform: scale(1);
+  transition: transform var(--transition-base);
 }
 
 .drag-overlay-content svg {
   color: var(--primary-500);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
   animation: pulse 2s ease-in-out infinite;
 }
 
 .drag-overlay-content h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: var(--spacing-sm);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
   color: var(--text-primary);
 }
 
 .drag-overlay-content p {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.98);
   }
 
   to {

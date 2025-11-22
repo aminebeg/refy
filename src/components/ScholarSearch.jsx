@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './ScholarSearch.css'
 import { enhanceSearchQuery } from '../utils/cerebrasService'
+import { getJournalRanking } from '../utils/journalRanking'
 
 export default function ScholarSearch({ onAddReference }) {
     const [searchQuery, setSearchQuery] = useState('')
@@ -13,6 +14,11 @@ export default function ScholarSearch({ onAddReference }) {
     const [offset, setOffset] = useState(0)
     const [hasMore, setHasMore] = useState(false)
     const [currentQuery, setCurrentQuery] = useState('')
+
+    // New Filter States
+    const [showArxiv, setShowArxiv] = useState(true)
+    const [showConferences, setShowConferences] = useState(true)
+    const [qualityFilter, setQualityFilter] = useState('all')
 
     const handleSearch = async (e, loadMore = false) => {
         if (e) e.preventDefault()
@@ -75,11 +81,24 @@ export default function ScholarSearch({ onAddReference }) {
             const data = await response.json()
 
             if (data.data && data.data.length > 0) {
+                // Enrich results with journal rankings
+                const enrichedResults = await Promise.all(data.data.map(async (result) => {
+                    let ranking = null;
+                    if (result.venue) {
+                        try {
+                            ranking = await getJournalRanking(result.venue);
+                        } catch (err) {
+                            console.warn(`Failed to get ranking for ${result.venue}`, err);
+                        }
+                    }
+                    return { ...result, ranking };
+                }));
+
                 if (loadMore) {
-                    setSearchResults(prev => [...prev, ...data.data])
+                    setSearchResults(prev => [...prev, ...enrichedResults])
                     setOffset(currentOffset + 20)
                 } else {
-                    setSearchResults(data.data)
+                    setSearchResults(enrichedResults)
                     setOffset(20)
                 }
                 setHasMore(data.total > (loadMore ? currentOffset + 20 : 20))
@@ -106,7 +125,7 @@ export default function ScholarSearch({ onAddReference }) {
             journal: result.venue || '',
             type: 'Journal Article',
             abstract: result.abstract || '',
-            tags: [],
+            tags: result.ranking ? [result.ranking] : [],
             notes: '',
             doi: result.externalIds?.DOI || '',
             link: result.url || '',
@@ -152,76 +171,143 @@ export default function ScholarSearch({ onAddReference }) {
         return null
     }
 
-    const getQualityTier = (citations) => {
-        if (!citations && citations !== 0) return null
+    const getQualityTier = (result) => {
+        if (!result.ranking) return null;
 
-        if (citations >= 100) return { tier: 'Q1', label: 'Highly Cited', color: 'q1' }
-        if (citations >= 50) return { tier: 'Q2', label: 'Well Cited', color: 'q2' }
-        if (citations >= 10) return { tier: 'Q3', label: 'Cited', color: 'q3' }
-        return { tier: 'Q4', label: 'Emerging', color: 'q4' }
+        const tier = result.ranking; // Q1, Q2, Q3, Q4
+        const labels = {
+            'Q1': 'Top Tier',
+            'Q2': 'High Impact',
+            'Q3': 'Standard',
+            'Q4': 'Emerging'
+        };
+
+        return {
+            tier: tier,
+            label: labels[tier] || tier,
+            color: tier.toLowerCase()
+        };
     }
+
+    // Filter Results
+    const filteredResults = searchResults.filter(result => {
+        const pubType = getPublicationType(result)
+        const qualityTier = getQualityTier(result)
+
+        // Filter by Type
+        if (!showArxiv && pubType?.type === 'arXiv') return false
+        if (!showConferences && pubType?.type === 'conference') return false
+
+        // Filter by Quality
+        if (qualityFilter !== 'all') {
+            if (!qualityTier) return false
+            if (qualityFilter === 'q1' && qualityTier.tier !== 'Q1') return false
+            if (qualityFilter === 'q2' && qualityTier.tier !== 'Q2') return false
+            if (qualityFilter === 'q3' && qualityTier.tier !== 'Q3') return false
+            if (qualityFilter === 'q4' && qualityTier.tier !== 'Q4') return false
+        }
+
+        return true
+    })
 
     return (
         <div className="scholar-search">
-            <form className="scholar-search-form" onSubmit={handleSearch}>
-                <div className="search-controls">
-                    <div className="search-input-wrapper">
-                        <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="2" />
-                            <path d="M12.5 12.5L17 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                        <input
-                            type="text"
-                            className="scholar-search-input"
-                            placeholder="Search papers, authors, concepts..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        {isEnhancing && (
-                            <div className="ai-enhancing-badge">
-                                <div className="mini-spinner"></div>
-                                <span>AI Enhancing...</span>
-                            </div>
-                        )}
+            <div className="scholar-search-header-container">
+                <form className="scholar-search-form" onSubmit={handleSearch}>
+                    <div className="search-controls">
+                        <div className="search-input-wrapper">
+                            <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="2" />
+                                <path d="M12.5 12.5L17 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            </svg>
+                            <input
+                                type="text"
+                                className="scholar-search-input"
+                                placeholder="Search papers, authors, concepts..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            {isEnhancing && (
+                                <div className="ai-enhancing-badge">
+                                    <div className="mini-spinner"></div>
+                                    <span>AI Enhancing...</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="btn-search"
+                            disabled={isSearching || !searchQuery.trim()}
+                        >
+                            {isSearching ? (
+                                <>
+                                    <div className="spinner-small"></div>
+                                    Searching...
+                                </>
+                            ) : (
+                                <>
+                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                        <circle cx="7.5" cy="7.5" r="5" stroke="currentColor" strokeWidth="2" />
+                                        <path d="M11 11l4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                                    </svg>
+                                    Search
+                                </>
+                            )}
+                        </button>
                     </div>
 
-                    <select
-                        className="filter-select"
-                        value={selectedYear}
-                        onChange={(e) => setSelectedYear(e.target.value)}
-                    >
-                        <option value="all">All Years</option>
-                        <option value="recent">Last 2 Years</option>
-                        <option value="5years">Last 5 Years</option>
-                        <option value="2024">2024</option>
-                        <option value="2023">2023</option>
-                        <option value="2022">2022</option>
-                        <option value="2021">2021</option>
-                        <option value="2020">2020</option>
-                    </select>
+                    <div className="filter-controls">
+                        <div className="filter-group">
+                            <label className="toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    checked={showArxiv}
+                                    onChange={(e) => setShowArxiv(e.target.checked)}
+                                />
+                                <span className="toggle-slider"></span>
+                                <span className="toggle-label">Show arXiv</span>
+                            </label>
 
-                    <button
-                        type="submit"
-                        className="btn-search"
-                        disabled={isSearching || !searchQuery.trim()}
-                    >
-                        {isSearching ? (
-                            <>
-                                <div className="spinner-small"></div>
-                                Searching...
-                            </>
-                        ) : (
-                            <>
-                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                                    <circle cx="7.5" cy="7.5" r="5" stroke="currentColor" strokeWidth="2" />
-                                    <path d="M11 11l4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                                </svg>
-                                Search
-                            </>
-                        )}
-                    </button>
-                </div>
-            </form>
+                            <label className="toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    checked={showConferences}
+                                    onChange={(e) => setShowConferences(e.target.checked)}
+                                />
+                                <span className="toggle-slider"></span>
+                                <span className="toggle-label">Show Conferences</span>
+                            </label>
+                        </div>
+
+                        <div className="filter-group">
+                            <select
+                                className="filter-select"
+                                value={selectedYear}
+                                onChange={(e) => setSelectedYear(e.target.value)}
+                            >
+                                <option value="all">All Years</option>
+                                <option value="recent">Last 2 Years</option>
+                                <option value="5years">Last 5 Years</option>
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                            </select>
+
+                            <select
+                                className="filter-select"
+                                value={qualityFilter}
+                                onChange={(e) => setQualityFilter(e.target.value)}
+                            >
+                                <option value="all">All Qualities</option>
+                                <option value="q1">Q1 (Top Tier)</option>
+                                <option value="q2">Q2 (High Impact)</option>
+                                <option value="q3">Q3 (Standard)</option>
+                                <option value="q4">Q4 (Emerging)</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
 
             {error && (
                 <div className="scholar-error">
@@ -240,15 +326,15 @@ export default function ScholarSearch({ onAddReference }) {
                 </div>
             )}
 
-            {!isSearching && searchResults.length > 0 && (
+            {!isSearching && filteredResults.length > 0 && (
                 <div className="scholar-results">
                     <div className="results-header">
-                        <h2>Found {searchResults.length} results{hasMore && '+'}</h2>
+                        <h2>Found {filteredResults.length} results {searchResults.length !== filteredResults.length && `(filtered from ${searchResults.length})`} {hasMore && '+'}</h2>
                     </div>
                     <div className="results-list">
-                        {searchResults.map((result, index) => {
+                        {filteredResults.map((result, index) => {
                             const pubType = getPublicationType(result)
-                            const qualityTier = getQualityTier(result.citationCount)
+                            const qualityTier = getQualityTier(result)
 
                             return (
                                 <div key={result.paperId || index} className="result-card">
@@ -262,7 +348,7 @@ export default function ScholarSearch({ onAddReference }) {
                                                     </span>
                                                 )}
                                                 {qualityTier && (
-                                                    <span className={`quality-badge ${qualityTier.color}`} title={`${result.citationCount} citations`}>
+                                                    <span className={`quality-badge ${qualityTier.color}`} title={`${result.venue} - ${qualityTier.label}`}>
                                                         {qualityTier.tier}
                                                     </span>
                                                 )}
@@ -352,6 +438,17 @@ export default function ScholarSearch({ onAddReference }) {
                             </button>
                         </div>
                     )}
+                </div>
+            )}
+
+            {!isSearching && filteredResults.length === 0 && searchResults.length > 0 && (
+                <div className="scholar-empty">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <path d="M32 8v48M8 32h48" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.2" />
+                        <circle cx="32" cy="32" r="12" stroke="currentColor" strokeWidth="2" opacity="0.2" />
+                    </svg>
+                    <h3>No results match your filters</h3>
+                    <p>Try adjusting your filters to see more results</p>
                 </div>
             )}
 

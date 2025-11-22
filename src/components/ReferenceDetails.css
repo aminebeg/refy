@@ -1,7 +1,7 @@
 .reference-details-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     z-index: 200;
     animation: fadeIn var(--transition-base);
@@ -12,17 +12,18 @@
     top: 0;
     right: 0;
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
+    /* Slightly wider for better readability */
     height: 100vh;
     background: var(--bg-secondary);
     border-left: 1px solid var(--border-default);
     display: flex;
     flex-direction: column;
-    animation: slideIn var(--transition-base);
-    overflow: hidden;
+    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--shadow-xl);
 }
 
-@keyframes slideIn {
+@keyframes slideInRight {
     from {
         transform: translateX(100%);
     }
@@ -36,15 +37,17 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-lg) var(--spacing-xl);
+    padding: var(--spacing-lg);
     border-bottom: 1px solid var(--border-subtle);
-    background: var(--bg-elevated);
+    background: var(--bg-secondary);
 }
 
 .details-header h2 {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .details-content {
@@ -86,10 +89,10 @@
 }
 
 .reference-title-large {
-    font-size: 1.375rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
-    line-height: 1.4;
+    line-height: 1.3;
     margin-bottom: var(--spacing-md);
 }
 
@@ -101,7 +104,7 @@
 }
 
 .section-title {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -115,34 +118,36 @@
 
 .authors-text {
     color: var(--text-secondary);
-    font-size: 0.9375rem;
+    font-size: 0.95rem;
     line-height: 1.6;
 }
 
 .journal-name {
-    font-size: 0.9375rem;
+    font-size: 0.95rem;
     color: var(--text-secondary);
     font-weight: 500;
+    font-style: italic;
 }
 
 .pdf-info {
     display: flex;
     align-items: center;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-md);
     padding: var(--spacing-md);
     background: var(--bg-tertiary);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
 }
 
 .pdf-icon-wrapper {
     flex-shrink: 0;
+    color: var(--danger-500);
 }
 
 .pdf-actions {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
     flex: 1;
 }
 
@@ -169,7 +174,8 @@
 .abstract-text {
     color: var(--text-secondary);
     line-height: 1.7;
-    font-size: 0.9375rem;
+    font-size: 0.95rem;
+    text-align: justify;
 }
 
 .tags-list {
@@ -180,39 +186,40 @@
 
 .tag-large {
     background: var(--bg-tertiary);
-    border: 1px solid var(--border-default);
-    color: var(--text-primary);
-    padding: 0.5rem 0.875rem;
-    border-radius: var(--radius-md);
-    font-size: 0.8125rem;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
     font-weight: 500;
     transition: all var(--transition-fast);
 }
 
 .tag-large:hover {
     border-color: var(--primary-500);
+    color: var(--text-primary);
     background: var(--bg-elevated);
 }
 
 .collections-list {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: 2px;
 }
 
 .collection-checkbox {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: var(--bg-tertiary);
+    gap: var(--spacing-md);
+    padding: 0.5rem;
+    background: transparent;
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: all var(--transition-fast);
 }
 
 .collection-checkbox:hover {
-    background: var(--bg-elevated);
+    background: var(--bg-tertiary);
 }
 
 .collection-checkbox input[type="checkbox"] {
@@ -220,18 +227,19 @@
     height: 16px;
     cursor: pointer;
     accent-color: var(--primary-500);
+    border-radius: 4px;
 }
 
 .collection-checkbox-color {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    box-shadow: 0 0 6px currentColor;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .collection-checkbox-label {
     flex: 1;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
 }
 
@@ -245,34 +253,38 @@
     width: 100%;
     padding: var(--spacing-md);
     background: var(--bg-tertiary);
-    border: 2px solid var(--border-subtle);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-family: inherit;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     line-height: 1.6;
     resize: vertical;
     transition: border-color var(--transition-fast);
+    min-height: 120px;
 }
 
 .notes-textarea:focus {
     outline: none;
     border-color: var(--primary-500);
+    background: var(--bg-elevated);
 }
 
 .notes-actions {
     display: flex;
     gap: var(--spacing-sm);
+    justify-content: flex-end;
 }
 
 .notes-display {
     color: var(--text-secondary);
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     line-height: 1.6;
     padding: var(--spacing-md);
     background: var(--bg-tertiary);
     border-radius: var(--radius-md);
     font-style: italic;
+    border: 1px solid var(--border-subtle);
 }
 
 .export-buttons {
@@ -282,19 +294,21 @@
 }
 
 .btn-sm {
-    padding: 0.5rem 0.875rem;
-    font-size: 0.8125rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
 }
 
 .btn-danger {
-    background: var(--danger-500);
-    color: white;
-    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger-500);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    box-shadow: none;
 }
 
 .btn-danger:hover {
-    background: var(--danger-600);
-    box-shadow: 0 6px 20px rgba(244, 63, 94, 0.4);
+    background: rgba(239, 68, 68, 0.2);
+    border-color: var(--danger-500);
+    box-shadow: none;
 }
 
 .delete-confirm {
@@ -305,52 +319,39 @@
 }
 
 .delete-confirm .text-sm {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     color: var(--text-secondary);
-}
-
-.delete-confirm .mb-2 {
-    margin-bottom: 0.5rem;
-}
-
-.delete-confirm .flex {
-    display: flex;
-}
-
-.delete-confirm .gap-2 {
-    gap: 0.5rem;
 }
 
 /* DOI Section */
 .doi-container {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
 }
 
 .doi-display {
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
     background: var(--bg-tertiary);
     border-radius: var(--radius-md);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .doi-link {
-    color: var(--primary-500);
+    color: var(--primary-400);
     text-decoration: none;
-    font-family: 'Courier New', monospace;
-    font-size: 0.875rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
     word-break: break-all;
     transition: color var(--transition-fast);
 }
 
 .doi-link:hover {
-    color: var(--primary-600);
+    color: var(--primary-300);
     text-decoration: underline;
-}
-
-.doi-container .btn {
-    align-self: flex-start;
 }
 
 @media (max-width: 768px) {

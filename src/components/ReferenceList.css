@@ -1,73 +1,88 @@
 .reference-list {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-md);
 }
 
 .reference-list.grid-view {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: var(--spacing-lg);
 }
 
 .reference-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
     cursor: pointer;
     transition: all var(--transition-base);
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .reference-card:hover {
-    border-color: var(--primary-500);
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
+    border-color: var(--border-default);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
 }
 
 .reference-card.selected {
     border-color: var(--primary-500);
-    background: var(--bg-elevated);
-    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+    background: rgba(99, 102, 241, 0.05);
+    box-shadow: 0 0 0 1px var(--primary-500);
 }
 
 .reference-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-md);
+    align-items: flex-start;
+    margin-bottom: var(--spacing-sm);
 }
 
 .reference-type-badge {
-    font-size: 0.625rem;
-    padding: 0.25rem 0.5rem;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
 }
 
 .favorite-btn {
     background: transparent;
     border: none;
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     cursor: pointer;
     padding: 0.25rem;
     line-height: 1;
-    transition: transform var(--transition-fast);
-    filter: grayscale(100%);
+    transition: all var(--transition-fast);
+    color: var(--text-disabled);
 }
 
 .favorite-btn:hover {
-    transform: scale(1.2);
+    color: var(--warning-500);
+    transform: scale(1.1);
 }
 
 .reference-card:hover .favorite-btn {
-    filter: grayscale(0);
+    color: var(--text-tertiary);
+}
+
+.reference-card:hover .favorite-btn:hover {
+    color: var(--warning-500);
 }
 
 .reference-title {
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: 0.25rem;
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -76,77 +91,97 @@
 }
 
 .reference-authors {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     color: var(--text-secondary);
     margin-bottom: var(--spacing-sm);
+    line-height: 1.4;
 }
 
 .reference-meta {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: var(--spacing-sm);
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     color: var(--text-tertiary);
     margin-bottom: var(--spacing-md);
 }
 
 .meta-separator {
     color: var(--text-disabled);
+    font-size: 0.6rem;
 }
 
 .reference-journal {
     font-style: italic;
+    color: var(--text-secondary);
 }
 
 .reference-abstract {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     color: var(--text-secondary);
     line-height: 1.6;
     margin-bottom: var(--spacing-md);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
 }
 
 .reference-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--spacing-xs);
+    gap: 4px;
+    margin-top: auto;
 }
 
 .tag {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-subtle);
     color: var(--text-secondary);
-    padding: 0.25rem 0.625rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    /* Pill shape */
+    font-size: 0.7rem;
     font-weight: 500;
     transition: all var(--transition-fast);
 }
 
 .reference-card:hover .tag {
-    border-color: var(--primary-500);
-    color: var(--primary-400);
+    border-color: var(--border-default);
+    background: var(--bg-primary);
 }
 
 .empty-state {
     text-align: center;
-    padding: var(--spacing-2xl) var(--spacing-xl);
+    padding: var(--spacing-3xl) var(--spacing-xl);
     color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .empty-icon {
-    font-size: 4rem;
+    font-size: 3rem;
     margin-bottom: var(--spacing-lg);
-    opacity: 0.5;
+    opacity: 0.3;
+    color: var(--text-tertiary);
 }
 
 .empty-state h3 {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
+    font-weight: 600;
     color: var(--text-primary);
     margin-bottom: var(--spacing-sm);
 }
 
 .empty-state p {
     color: var(--text-tertiary);
+    font-size: 0.9rem;
+    max-width: 300px;
 }
 
 @media (max-width: 768px) {
@@ -156,9 +191,5 @@
 
     .reference-card {
         padding: var(--spacing-md);
-    }
-
-    .reference-title {
-        font-size: 1rem;
     }
 }
