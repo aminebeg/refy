@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import './ReferenceDetails.css'
 import { getPDFUrl, getPDFBlob } from '../utils/pdfStorage'
+import TechnicalSheet from './TechnicalSheet'
 
 export default function ReferenceDetails({
     reference,
@@ -15,6 +16,7 @@ export default function ReferenceDetails({
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [selectedCollections, setSelectedCollections] = useState(reference.collectionIds || [])
     const [pdfUrl, setPdfUrl] = useState(null)
+    const [showTechnicalSheet, setShowTechnicalSheet] = useState(false)
 
     // Load PDF URL from IndexedDB when component mounts
     useEffect(() => {
@@ -101,6 +103,15 @@ export default function ReferenceDetails({
 
                 <div className="details-content">
                     <div className="details-actions">
+                        <button
+                            className="btn btn-primary"
+                            onClick={() => setShowTechnicalSheet(true)}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            </svg>
+                            Technical Review
+                        </button>
                         <button
                             className="btn btn-secondary"
                             onClick={() => onToggleFavorite(reference.id)}
@@ -351,6 +362,13 @@ export default function ReferenceDetails({
                     </div>
                 </div>
             </aside>
+            {showTechnicalSheet && (
+                <TechnicalSheet
+                    reference={reference}
+                    onClose={() => setShowTechnicalSheet(false)}
+                    onSave={onUpdate}
+                />
+            )}
         </div>
     )
 }
