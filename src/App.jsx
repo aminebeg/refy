@@ -5,6 +5,8 @@ import ReferenceList from './components/ReferenceList'
 import ReferenceDetails from './components/ReferenceDetails'
 import BatchAddReferencesModal from './components/BatchAddReferencesModal'
 import SearchBar from './components/SearchBar'
+import SettingsModal from './components/SettingsModal'
+import ScholarSearch from './components/ScholarSearch'
 import { savePDF } from './utils/pdfStorage'
 import { extractPDFMetadata } from './utils/pdfMetadata'
 
@@ -16,6 +18,7 @@ function App() {
   const [selectedCollection, setSelectedCollection] = useState(null)
   const [selectedReference, setSelectedReference] = useState(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState('list') // 'list' or 'grid'
   const [isDragging, setIsDragging] = useState(false)
@@ -324,24 +327,31 @@ function App() {
           onFilesDrop={handleFilesDrop}
           viewMode={viewMode}
           setViewMode={setViewMode}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
 
         <main
           className="main-content"
         >
-          <SearchBar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            resultCount={filteredReferences.length}
-          />
+          {selectedFolder === 'Search Scholar' ? (
+            <ScholarSearch onAddReference={addReference} />
+          ) : (
+            <>
+              <SearchBar
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                resultCount={filteredReferences.length}
+              />
 
-          <ReferenceList
-            references={filteredReferences}
-            selectedReference={selectedReference}
-            onSelectReference={setSelectedReference}
-            onToggleFavorite={toggleFavorite}
-            viewMode={viewMode}
-          />
+              <ReferenceList
+                references={filteredReferences}
+                selectedReference={selectedReference}
+                onSelectReference={setSelectedReference}
+                onToggleFavorite={toggleFavorite}
+                viewMode={viewMode}
+              />
+            </>
+          )}
         </main>
 
         {selectedReference && (
@@ -366,6 +376,10 @@ function App() {
             onAddBatch={addReferencesBatch}
             droppedFiles={droppedFiles}
           />
+        )}
+
+        {isSettingsOpen && (
+          <SettingsModal onClose={() => setIsSettingsOpen(false)} />
         )}
       </div>
     </div>

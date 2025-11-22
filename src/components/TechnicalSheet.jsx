@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './TechnicalSheet.css'
+import { extractPDFText } from '../utils/pdfTextExtractor'
+import { analyzePaperWithCerebras } from '../utils/cerebrasService'
+import { getPDFBlob } from '../utils/pdfStorage'
 
 export default function TechnicalSheet({ reference, onClose, onSave }) {
     const [review, setReview] = useState({
@@ -17,6 +20,7 @@ export default function TechnicalSheet({ reference, onClose, onSave }) {
     })
 
     const [isAIAssisting, setIsAIAssisting] = useState(false)
+    const [statusMessage, setStatusMessage] = useState('')
 
     const handleSave = () => {
         onSave(reference.id, { technicalReview: review })
@@ -27,15 +31,66 @@ export default function TechnicalSheet({ reference, onClose, onSave }) {
         setReview(prev => ({ ...prev, [field]: value }))
     }
 
-    const handleAIAssist = async (field) => {
+    const handleAutoFill = async () => {
+        const rawApiKey = localStorage.getItem('cerebras_api_key')
+        const apiKey = rawApiKey ? rawApiKey.trim() : null
+
+        if (!apiKey) {
+            alert("Please set your Cerebras API Key in Settings (gear icon in sidebar) to use AI features.")
+            return
+        }
+
+        if (!reference.pdfId && !reference.hasPDF) {
+            alert("No PDF attached to this reference. Please upload a PDF first.")
+            return
+        }
+
         setIsAIAssisting(true)
-        // Placeholder for AI integration
-        // You can integrate with OpenAI API or other AI services here
-        alert('AI assistance will be integrated here. This will analyze the PDF and help fill in the review fields.')
-        setIsAIAssisting(false)
+        setStatusMessage('Extracting text from PDF...')
+
+        try {
+            // 1. Get PDF Blob
+            const pdfId = reference.pdfId || reference.id
+            console.log('Fetching PDF blob for ID:', pdfId)
+            const pdfData = await getPDFBlob(pdfId)
+
+            if (!pdfData || !pdfData.blob) {
+                console.error("PDF Blob not found in storage")
+                throw new Error("Could not load PDF file. Please ensure the PDF is saved correctly.")
+            }
+            const pdfBlob = pdfData.blob
+            console.log("PDF Blob retrieved, size:", pdfBlob.size)
+            setStatusMessage('Reading PDF text...')
+            const text = await extractPDFText(pdfBlob)
+            console.log("Extracted text length:", text?.length)
+
+            if (!text || text.length < 100) {
+                throw new Error("Could not extract enough text from the PDF. It might be an image-only PDF.")
+            }
+            setStatusMessage(`Analyzed ${text.length} chars. Sending to Cerebras AI...`)
+
+            // 3. Analyze with Cerebras
+            const analysis = await analyzePaperWithCerebras(text, apiKey)
+
+            // 4. Update State
+            setReview(prev => ({
+                ...prev,
+                ...analysis
+            }))
+
+            setStatusMessage('Success! Review updated.')
+            setTimeout(() => setStatusMessage(''), 3000)
+
+        } catch (error) {
+            console.error('Auto-fill error:', error)
+            setStatusMessage(`❌ ${error.message}`)
+        } finally {
+            setIsAIAssisting(false)
+        }
     }
 
     const ratingStars = [1, 2, 3, 4, 5]
+    const hasApiKey = !!localStorage.getItem('cerebras_api_key')
 
     return (
         <div className="technical-sheet-overlay" onClick={onClose}>
@@ -47,16 +102,33 @@ export default function TechnicalSheet({ reference, onClose, onSave }) {
                         <p className="reference-title-small">{reference.title}</p>
                     </div>
                     <div className="header-actions">
-                        <button className="btn btn-secondary" onClick={handleSave}>
+                        <button
+                            className={`btn-auto-fill ${isAIAssisting ? 'loading' : ''}`}
+                            onClick={handleAutoFill}
+                            disabled={isAIAssisting}
+                            title={!hasApiKey ? "Set API Key in Settings first" : "Auto-fill review using Cerebras AI"}
+                        >
+                            {isAIAssisting ? (
+                                <>
+                                    <span className="spinner"></span>
+                                    <span style={{ fontSize: '0.8125rem' }}>{statusMessage}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M12 2a10 10 0 1 0 10 10H12V2z" />
+                                        <path d="M12 2a10 10 0 0 1 10 10" opacity="0.5" />
+                                    </svg>
+                                    ✨ Auto-Fill
+                                </>
+                            )}
+                        </button>
+                        <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+                        <button className="btn btn-primary" onClick={handleSave}>
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                 <path d="M13 2l-8 8-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
-                            Save Review
-                        </button>
-                        <button className="btn-icon" onClick={onClose} title="Close">
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                <path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                            </svg>
+                            Save
                         </button>
                     </div>
                 </div>
@@ -64,69 +136,47 @@ export default function TechnicalSheet({ reference, onClose, onSave }) {
                 {/* Content */}
                 <div className="technical-sheet-content">
                     <div className="review-grid">
-                        {/* Rating - Top Priority */}
+                        {/* Rating - Inline */}
                         <div className="review-section rating-section">
-                            <h3 className="review-section-title">Overall Rating</h3>
-                            <div className="rating-stars">
-                                {ratingStars.map(star => (
-                                    <button
-                                        key={star}
-                                        className={`star-btn ${star <= review.rating ? 'active' : ''}`}
-                                        onClick={() => handleFieldChange('rating', star)}
-                                    >
-                                        ★
-                                    </button>
-                                ))}
+                            <div className="rating-content">
+                                <h3 className="review-section-title">📊 Overall Rating</h3>
+                                <div className="rating-stars">
+                                    {ratingStars.map(star => (
+                                        <button
+                                            key={star}
+                                            className={`star-btn ${star <= review.rating ? 'active' : ''}`}
+                                            onClick={() => handleFieldChange('rating', star)}
+                                        >
+                                            ★
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                             <div className="rating-text">
                                 {review.rating > 0 ?
                                     ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][review.rating - 1]
-                                    : 'Rate this paper'}
+                                    : 'Click to rate'}
                             </div>
                         </div>
 
-                        {/* Summary */}
-                        <div className="review-section">
+                        {/* Summary - Full Width */}
+                        <div className="review-section full-width">
                             <div className="section-header-with-ai">
-                                <h3 className="review-section-title">
-                                    <span style={{ marginRight: '8px' }}>📝</span> Summary
-                                </h3>
-                                <button
-                                    className="btn-ai-assist"
-                                    onClick={() => handleAIAssist('summary')}
-                                    disabled={isAIAssisting}
-                                >
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                        <path d="M6 1L7.5 4.5L11 6L7.5 7.5L6 11L4.5 7.5L1 6L4.5 4.5L6 1Z" fill="currentColor" />
-                                    </svg>
-                                    AI Assist
-                                </button>
+                                <h3 className="review-section-title">📝 Summary</h3>
                             </div>
                             <textarea
                                 className="review-textarea"
                                 placeholder="Brief overview of the paper..."
                                 value={review.summary}
                                 onChange={(e) => handleFieldChange('summary', e.target.value)}
-                                rows={4}
+                                rows={3}
                             />
                         </div>
 
-                        {/* Research Question */}
+                        {/* Research Question - Left Column */}
                         <div className="review-section">
                             <div className="section-header-with-ai">
-                                <h3 className="review-section-title">
-                                    <span style={{ marginRight: '8px' }}>❓</span> Research Question
-                                </h3>
-                                <button
-                                    className="btn-ai-assist"
-                                    onClick={() => handleAIAssist('researchQuestion')}
-                                    disabled={isAIAssisting}
-                                >
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                        <path d="M6 1L7.5 4.5L11 6L7.5 7.5L6 11L4.5 7.5L1 6L4.5 4.5L6 1Z" fill="currentColor" />
-                                    </svg>
-                                    AI Assist
-                                </button>
+                                <h3 className="review-section-title">❓ Research Question</h3>
                             </div>
                             <textarea
                                 className="review-textarea"
@@ -137,91 +187,37 @@ export default function TechnicalSheet({ reference, onClose, onSave }) {
                             />
                         </div>
 
-                        {/* Methodology */}
+                        {/* Methodology - Right Column */}
                         <div className="review-section">
                             <div className="section-header-with-ai">
-                                <h3 className="review-section-title">
-                                    <span style={{ marginRight: '8px' }}>🔬</span> Methodology
-                                </h3>
-                                <button
-                                    className="btn-ai-assist"
-                                    onClick={() => handleAIAssist('methodology')}
-                                    disabled={isAIAssisting}
-                                >
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                        <path d="M6 1L7.5 4.5L11 6L7.5 7.5L6 11L4.5 7.5L1 6L4.5 4.5L6 1Z" fill="currentColor" />
-                                    </svg>
-                                    AI Assist
-                                </button>
+                                <h3 className="review-section-title">🔬 Methodology</h3>
                             </div>
                             <textarea
                                 className="review-textarea"
                                 placeholder="Methods, approaches, and techniques used..."
                                 value={review.methodology}
                                 onChange={(e) => handleFieldChange('methodology', e.target.value)}
-                                rows={4}
+                                rows={3}
                             />
                         </div>
 
-                        {/* Key Findings */}
+                        {/* Key Findings - Left Column */}
                         <div className="review-section">
                             <div className="section-header-with-ai">
-                                <h3 className="review-section-title">
-                                    <span style={{ marginRight: '8px' }}>💡</span> Key Findings
-                                </h3>
-                                <button
-                                    className="btn-ai-assist"
-                                    onClick={() => handleAIAssist('keyFindings')}
-                                    disabled={isAIAssisting}
-                                >
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                        <path d="M6 1L7.5 4.5L11 6L7.5 7.5L6 11L4.5 7.5L1 6L4.5 4.5L6 1Z" fill="currentColor" />
-                                    </svg>
-                                    AI Assist
-                                </button>
+                                <h3 className="review-section-title">💡 Key Findings</h3>
                             </div>
                             <textarea
                                 className="review-textarea"
                                 placeholder="Main results and discoveries..."
                                 value={review.keyFindings}
                                 onChange={(e) => handleFieldChange('keyFindings', e.target.value)}
-                                rows={4}
-                            />
-                        </div>
-
-                        {/* Strengths */}
-                        <div className="review-section">
-                            <h3 className="review-section-title">
-                                <span style={{ marginRight: '8px' }}>✅</span> Strengths
-                            </h3>
-                            <textarea
-                                className="review-textarea"
-                                placeholder="What are the strong points of this paper?"
-                                value={review.strengths}
-                                onChange={(e) => handleFieldChange('strengths', e.target.value)}
                                 rows={3}
                             />
                         </div>
 
-                        {/* Weaknesses */}
+                        {/* Contributions - Right Column */}
                         <div className="review-section">
-                            <h3 className="review-section-title">
-                                <span style={{ marginRight: '8px' }}>⚠️</span> Weaknesses
-                            </h3>
-                            <textarea
-                                className="review-textarea"
-                                placeholder="What are the limitations or weak points?"
-                                value={review.weaknesses}
-                                onChange={(e) => handleFieldChange('weaknesses', e.target.value)}
-                                rows={3}
-                            />
-                        </div>
-
-                        {/* Contributions */}
-                        <div className="review-section">
-                            <h3 className="review-section-title">
-                                <span style={{ marginRight: '8px' }}>🌟</span> Contributions
-                            </h3>
+                            <h3 className="review-section-title">🌟 Contributions</h3>
                             <textarea
                                 className="review-textarea"
                                 placeholder="How does this advance the field?"
@@ -231,11 +227,33 @@ export default function TechnicalSheet({ reference, onClose, onSave }) {
                             />
                         </div>
 
-                        {/* Future Work */}
+                        {/* Strengths - Left Column */}
                         <div className="review-section">
-                            <h3 className="review-section-title">
-                                <span style={{ marginRight: '8px' }}>🚀</span> Future Work
-                            </h3>
+                            <h3 className="review-section-title">✅ Strengths</h3>
+                            <textarea
+                                className="review-textarea"
+                                placeholder="What are the strong points of this paper?"
+                                value={review.strengths}
+                                onChange={(e) => handleFieldChange('strengths', e.target.value)}
+                                rows={3}
+                            />
+                        </div>
+
+                        {/* Weaknesses - Right Column */}
+                        <div className="review-section">
+                            <h3 className="review-section-title">⚠️ Weaknesses</h3>
+                            <textarea
+                                className="review-textarea"
+                                placeholder="What are the limitations or weak points?"
+                                value={review.weaknesses}
+                                onChange={(e) => handleFieldChange('weaknesses', e.target.value)}
+                                rows={3}
+                            />
+                        </div>
+
+                        {/* Future Work - Left Column */}
+                        <div className="review-section">
+                            <h3 className="review-section-title">🚀 Future Work</h3>
                             <textarea
                                 className="review-textarea"
                                 placeholder="Potential directions for future research..."
@@ -245,11 +263,9 @@ export default function TechnicalSheet({ reference, onClose, onSave }) {
                             />
                         </div>
 
-                        {/* Personal Notes */}
+                        {/* Personal Notes - Right Column */}
                         <div className="review-section">
-                            <h3 className="review-section-title">
-                                <span style={{ marginRight: '8px' }}>💭</span> Personal Notes
-                            </h3>
+                            <h3 className="review-section-title">💭 Personal Notes</h3>
                             <textarea
                                 className="review-textarea"
                                 placeholder="Your thoughts, questions, ideas for your own work..."
@@ -259,17 +275,6 @@ export default function TechnicalSheet({ reference, onClose, onSave }) {
                             />
                         </div>
                     </div>
-                </div>
-
-                {/* Footer */}
-                <div className="technical-sheet-footer">
-                    <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-                    <button className="btn btn-primary" onClick={handleSave}>
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M13 2l-8 8-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        Save Review
-                    </button>
                 </div>
             </div>
         </div>

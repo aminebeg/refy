@@ -15,7 +15,8 @@ export default function Sidebar({
     onAddReference,
     onFilesDrop,
     viewMode,
-    setViewMode
+    setViewMode,
+    onOpenSettings
 }) {
     const [isAddingCollection, setIsAddingCollection] = useState(false)
     const [newCollectionName, setNewCollectionName] = useState('')
@@ -160,6 +161,16 @@ export default function Sidebar({
                             )}
                         </button>
                     ))}
+                    <button
+                        className={`sidebar-item ${selectedFolder === 'Search Scholar' && !selectedCollection ? 'active' : ''}`}
+                        onClick={() => {
+                            onSelectFolder('Search Scholar')
+                            onSelectCollection(null)
+                        }}
+                    >
+                        <span className="sidebar-icon">🔍</span>
+                        <span className="sidebar-label">Search Scholar</span>
+                    </button>
                 </nav>
             </div>
 
@@ -322,7 +333,13 @@ export default function Sidebar({
                             style={{ width: `${Math.min((referenceCount / 100) * 100, 100)}%` }}
                         />
                     </div>
-                </div></div>
+                </div>
+
+                <button className="sidebar-item mt-4" onClick={onOpenSettings}>
+                    <span className="sidebar-icon">⚙️</span>
+                    <span className="sidebar-label">Settings</span>
+                </button>
+            </div>
         </aside>
     )
 }

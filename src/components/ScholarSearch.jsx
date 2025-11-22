@@ -1,0 +1,397 @@
+import { useState } from 'react'
+import './ScholarSearch.css'
+import { enhanceSearchQuery } from '../utils/cerebrasService'
+
+export default function ScholarSearch({ onAddReference }) {
+    const [searchQuery, setSearchQuery] = useState('')
+    const [isSearching, setIsSearching] = useState(false)
+    const [isEnhancing, setIsEnhancing] = useState(false)
+    const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const [searchResults, setSearchResults] = useState([])
+    const [error, setError] = useState(null)
+    const [selectedYear, setSelectedYear] = useState('all')
+    const [offset, setOffset] = useState(0)
+    const [hasMore, setHasMore] = useState(false)
+    const [currentQuery, setCurrentQuery] = useState('')
+
+    const handleSearch = async (e, loadMore = false) => {
+        if (e) e.preventDefault()
+        if (!searchQuery.trim() && !loadMore) return
+
+        const currentOffset = loadMore ? offset : 0
+
+        if (loadMore) {
+            setIsLoadingMore(true)
+        } else {
+            setIsSearching(true)
+            setSearchResults([])
+            setOffset(0)
+        }
+
+        setError(null)
+
+        try {
+            const apiKey = localStorage.getItem('cerebras_api_key')
+            let queryToSearch = loadMore ? currentQuery : searchQuery
+
+            if (!loadMore && apiKey && apiKey.trim()) {
+                setIsEnhancing(true)
+                try {
+                    const enhancedQuery = await enhanceSearchQuery(apiKey.trim(), searchQuery)
+                    if (enhancedQuery && enhancedQuery !== searchQuery) {
+                        queryToSearch = enhancedQuery
+                        console.log('Enhanced query:', queryToSearch)
+                    }
+                } catch (aiError) {
+                    console.warn('AI enhancement failed, using original query:', aiError)
+                } finally {
+                    setIsEnhancing(false)
+                }
+            }
+
+            setCurrentQuery(queryToSearch)
+
+            let url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(queryToSearch)}&offset=${currentOffset}&limit=20&fields=title,authors,year,abstract,venue,citationCount,externalIds,url,publicationDate`
+
+            if (selectedYear !== 'all') {
+                const currentYear = new Date().getFullYear()
+                let yearFilter = ''
+                if (selectedYear === 'recent') {
+                    yearFilter = `&year=${currentYear - 2}-${currentYear}`
+                } else if (selectedYear === '5years') {
+                    yearFilter = `&year=${currentYear - 5}-${currentYear}`
+                } else {
+                    yearFilter = `&year=${selectedYear}`
+                }
+                url += yearFilter
+            }
+
+            const response = await fetch(url)
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch results from Semantic Scholar')
+            }
+
+            const data = await response.json()
+
+            if (data.data && data.data.length > 0) {
+                if (loadMore) {
+                    setSearchResults(prev => [...prev, ...data.data])
+                    setOffset(currentOffset + 20)
+                } else {
+                    setSearchResults(data.data)
+                    setOffset(20)
+                }
+                setHasMore(data.total > (loadMore ? currentOffset + 20 : 20))
+            } else {
+                if (!loadMore) {
+                    setSearchResults([])
+                }
+                setHasMore(false)
+            }
+        } catch (err) {
+            console.error('Scholar search error:', err)
+            setError(err.message || 'Failed to search papers. Please try again.')
+        } finally {
+            setIsSearching(false)
+            setIsLoadingMore(false)
+        }
+    }
+
+    const handleAddToLibrary = (result) => {
+        const reference = {
+            title: result.title || 'Untitled',
+            authors: result.authors?.map(a => a.name) || [],
+            year: result.year || new Date().getFullYear(),
+            journal: result.venue || '',
+            type: 'Journal Article',
+            abstract: result.abstract || '',
+            tags: [],
+            notes: '',
+            doi: result.externalIds?.DOI || '',
+            link: result.url || '',
+            favorite: false,
+            collectionIds: []
+        }
+
+        onAddReference(reference)
+
+        const button = document.querySelector(`[data-paper-id="${result.paperId}"]`)
+        if (button) {
+            button.textContent = '✓ Added!'
+            button.classList.add('added')
+            setTimeout(() => {
+                button.textContent = 'Add to Library'
+                button.classList.remove('added')
+            }, 2000)
+        }
+    }
+
+    const getPublicationType = (result) => {
+        const venue = result.venue?.toLowerCase() || ''
+
+        if (result.externalIds?.ArXiv || venue.includes('arxiv')) {
+            return { type: 'arXiv', label: 'arXiv Preprint', color: 'arxiv' }
+        }
+
+        const conferencePatterns = [
+            'conference', 'proceedings', 'workshop', 'symposium',
+            'nips', 'neurips', 'icml', 'iclr', 'cvpr', 'iccv', 'eccv',
+            'acl', 'emnlp', 'naacl', 'coling', 'aaai', 'ijcai',
+            'kdd', 'www', 'sigir', 'icde', 'vldb', 'sigmod'
+        ]
+
+        if (conferencePatterns.some(pattern => venue.includes(pattern))) {
+            return { type: 'conference', label: 'Conference', color: 'conference' }
+        }
+
+        if (venue) {
+            return { type: 'journal', label: 'Journal', color: 'journal' }
+        }
+
+        return null
+    }
+
+    const getQualityTier = (citations) => {
+        if (!citations && citations !== 0) return null
+
+        if (citations >= 100) return { tier: 'Q1', label: 'Highly Cited', color: 'q1' }
+        if (citations >= 50) return { tier: 'Q2', label: 'Well Cited', color: 'q2' }
+        if (citations >= 10) return { tier: 'Q3', label: 'Cited', color: 'q3' }
+        return { tier: 'Q4', label: 'Emerging', color: 'q4' }
+    }
+
+    return (
+        <div className="scholar-search">
+            <form className="scholar-search-form" onSubmit={handleSearch}>
+                <div className="search-controls">
+                    <div className="search-input-wrapper">
+                        <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="2" />
+                            <path d="M12.5 12.5L17 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                        <input
+                            type="text"
+                            className="scholar-search-input"
+                            placeholder="Search papers, authors, concepts..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        {isEnhancing && (
+                            <div className="ai-enhancing-badge">
+                                <div className="mini-spinner"></div>
+                                <span>AI Enhancing...</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <select
+                        className="filter-select"
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(e.target.value)}
+                    >
+                        <option value="all">All Years</option>
+                        <option value="recent">Last 2 Years</option>
+                        <option value="5years">Last 5 Years</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                        <option value="2020">2020</option>
+                    </select>
+
+                    <button
+                        type="submit"
+                        className="btn-search"
+                        disabled={isSearching || !searchQuery.trim()}
+                    >
+                        {isSearching ? (
+                            <>
+                                <div className="spinner-small"></div>
+                                Searching...
+                            </>
+                        ) : (
+                            <>
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                    <circle cx="7.5" cy="7.5" r="5" stroke="currentColor" strokeWidth="2" />
+                                    <path d="M11 11l4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                                </svg>
+                                Search
+                            </>
+                        )}
+                    </button>
+                </div>
+            </form>
+
+            {error && (
+                <div className="scholar-error">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="2" />
+                        <path d="M10 6v4M10 13h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                    <p>{error}</p>
+                </div>
+            )}
+
+            {isSearching && (
+                <div className="scholar-loading">
+                    <div className="spinner-large"></div>
+                    <p>Searching Semantic Scholar database...</p>
+                </div>
+            )}
+
+            {!isSearching && searchResults.length > 0 && (
+                <div className="scholar-results">
+                    <div className="results-header">
+                        <h2>Found {searchResults.length} results{hasMore && '+'}</h2>
+                    </div>
+                    <div className="results-list">
+                        {searchResults.map((result, index) => {
+                            const pubType = getPublicationType(result)
+                            const qualityTier = getQualityTier(result.citationCount)
+
+                            return (
+                                <div key={result.paperId || index} className="result-card">
+                                    <div className="result-content">
+                                        <div className="result-title-row">
+                                            <h3 className="result-title">{result.title}</h3>
+                                            <div className="publication-badges">
+                                                {pubType && (
+                                                    <span className={`pub-type-badge ${pubType.color}`}>
+                                                        {pubType.label}
+                                                    </span>
+                                                )}
+                                                {qualityTier && (
+                                                    <span className={`quality-badge ${qualityTier.color}`} title={`${result.citationCount} citations`}>
+                                                        {qualityTier.tier}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="result-meta">
+                                            {result.authors && result.authors.length > 0 && (
+                                                <span className="result-authors">
+                                                    {result.authors.slice(0, 3).map(a => a.name).join(', ')}
+                                                    {result.authors.length > 3 && ' et al.'}
+                                                </span>
+                                            )}
+                                            {result.venue && (
+                                                <span className="result-journal">
+                                                    📄 {result.venue}
+                                                </span>
+                                            )}
+                                            {result.year && (
+                                                <span className="result-year">({result.year})</span>
+                                            )}
+                                        </div>
+                                        {result.abstract && (
+                                            <p className="result-snippet">
+                                                {result.abstract.length > 300
+                                                    ? result.abstract.substring(0, 300) + '...'
+                                                    : result.abstract}
+                                            </p>
+                                        )}
+                                        <div className="result-footer">
+                                            {result.citationCount !== null && result.citationCount !== undefined && (
+                                                <span className="result-citations">
+                                                    📊 {result.citationCount} citations
+                                                </span>
+                                            )}
+                                            {result.externalIds?.DOI && (
+                                                <span className="result-doi">
+                                                    🔗 {result.externalIds.DOI}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="result-actions">
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={() => handleAddToLibrary(result)}
+                                            data-paper-id={result.paperId}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                <path d="M8 3v10M13 8H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                                            </svg>
+                                            Add to Library
+                                        </button>
+                                        {result.url && (
+                                            <a
+                                                href={result.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="btn btn-secondary"
+                                            >
+                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                    <path d="M12 8.5v3a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 012 11.5v-7A1.5 1.5 0 013.5 3h3M9 2h5v5M6.5 9.5L14 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                                View
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+
+                    {hasMore && (
+                        <div className="load-more-section">
+                            <button
+                                className="btn-load-more"
+                                onClick={() => handleSearch(null, true)}
+                                disabled={isLoadingMore}
+                            >
+                                {isLoadingMore ? (
+                                    <>
+                                        <div className="spinner-small"></div>
+                                        Loading more...
+                                    </>
+                                ) : (
+                                    'Load More Results'
+                                )}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {!isSearching && searchResults.length === 0 && searchQuery && (
+                <div className="scholar-empty">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="2" opacity="0.2" />
+                        <path d="M26 26l12 12M38 26l-12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                    <h3>No results found</h3>
+                    <p>Try different keywords or adjust your filters</p>
+                </div>
+            )}
+
+            {!isSearching && searchResults.length === 0 && !searchQuery && (
+                <div className="scholar-welcome">
+                    <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="48" fill="url(#grad1)" />
+                        <path d="M40 35l20 15-20 15V35z" fill="white" opacity="0.9" />
+                        <defs>
+                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="rgba(99, 102, 241, 0.15)" />
+                                <stop offset="100%" stopColor="rgba(236, 72, 153, 0.1)" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <h3>Search 200M+ Academic Papers</h3>
+                    <p>Enter keywords, authors, or research topics to find relevant papers</p>
+
+                    {localStorage.getItem('cerebras_api_key') && (
+                        <div className="ai-enhancement-info">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <circle cx="10" cy="10" r="8" fill="rgba(99, 102, 241, 0.1)" stroke="currentColor" strokeWidth="1.5" />
+                                <path d="M10 6l2 4-2 4-2-4 2-4z" fill="currentColor" />
+                            </svg>
+                            <p className="ai-enabled">✨ AI query enhancement enabled</p>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    )
+}
