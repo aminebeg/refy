@@ -137,19 +137,18 @@ export async function enhanceSearchQuery(apiKey, query) {
     const systemPrompt = "You are an expert at converting natural language queries into optimized academic search queries.";
 
     const userPrompt = `
-    Convert the following search query into a better, more academic search query that will return better results from an academic paper database.
+    Augment the following search query by adding 2-3 related academic terms or synonyms using the OR operator (|).
     
     Rules:
-    1. Keep it concise (max 10 words)
-    2. Use academic terminology when appropriate
-    3. Remove filler words like "I want to find", "papers about", etc.
-    4. Focus on key concepts and technical terms
-    5. If the query is already good, return it unchanged
-    6. Return ONLY the enhanced query text, nothing else
+    1. Identify the core concept of the query.
+    2. Generate 2-3 high-quality academic synonyms or related technical terms.
+    3. Combine the original query and the new terms using the pipe symbol (|) for OR.
+    4. Example: If query is "deep learning", return "deep learning | neural networks | representation learning"
+    5. Return ONLY the augmented query string.
     
     Original query: "${query}"
     
-    Enhanced query:`;
+    Augmented query:`;
 
     const modelsToTry = ["llama-3.3-70b", "llama3.1-70b", "llama3.1-8b"];
 

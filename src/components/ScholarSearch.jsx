@@ -19,6 +19,7 @@ export default function ScholarSearch({ onAddReference }) {
     const [showArxiv, setShowArxiv] = useState(true)
     const [showConferences, setShowConferences] = useState(true)
     const [qualityFilter, setQualityFilter] = useState('all')
+    const [enableAI, setEnableAI] = useState(true)
 
     const handleSearch = async (e, loadMore = false) => {
         if (e) e.preventDefault()
@@ -40,7 +41,7 @@ export default function ScholarSearch({ onAddReference }) {
             const apiKey = localStorage.getItem('cerebras_api_key')
             let queryToSearch = loadMore ? currentQuery : searchQuery
 
-            if (!loadMore && apiKey && apiKey.trim()) {
+            if (!loadMore && apiKey && apiKey.trim() && enableAI) {
                 setIsEnhancing(true)
                 try {
                     const enhancedQuery = await enhanceSearchQuery(apiKey.trim(), searchQuery)
@@ -230,7 +231,7 @@ export default function ScholarSearch({ onAddReference }) {
                             {isEnhancing && (
                                 <div className="ai-enhancing-badge">
                                     <div className="mini-spinner"></div>
-                                    <span>AI Enhancing...</span>
+                                    <span>AI Augmenting...</span>
                                 </div>
                             )}
                         </div>
@@ -259,6 +260,21 @@ export default function ScholarSearch({ onAddReference }) {
 
                     <div className="filter-controls">
                         <div className="filter-group">
+                            <label className="toggle-switch" title="Use AI to improve search queries">
+                                <input
+                                    type="checkbox"
+                                    checked={enableAI}
+                                    onChange={(e) => setEnableAI(e.target.checked)}
+                                />
+                                <span className="toggle-slider"></span>
+                                <span className="toggle-label">
+                                    <span className="ai-label-text">AI Augment</span>
+                                    {enableAI && <span className="ai-sparkle">✨</span>}
+                                </span>
+                            </label>
+
+                            <div className="divider-vertical"></div>
+
                             <label className="toggle-switch">
                                 <input
                                     type="checkbox"
@@ -307,6 +323,20 @@ export default function ScholarSearch({ onAddReference }) {
                         </div>
                     </div>
                 </form>
+
+                {currentQuery && currentQuery !== searchQuery && (
+                    <div className="enhanced-query-display">
+                        <div className="enhanced-query-content">
+                            <span className="enhanced-label">
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                    <path d="M7 0.5L8.5 5.5L13.5 7L8.5 8.5L7 13.5L5.5 8.5L0.5 7L5.5 5.5L7 0.5Z" fill="currentColor" />
+                                </svg>
+                                AI Augmented Query:
+                            </span>
+                            <span className="enhanced-text">{currentQuery}</span>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {error && (
@@ -484,7 +514,7 @@ export default function ScholarSearch({ onAddReference }) {
                                 <circle cx="10" cy="10" r="8" fill="rgba(99, 102, 241, 0.1)" stroke="currentColor" strokeWidth="1.5" />
                                 <path d="M10 6l2 4-2 4-2-4 2-4z" fill="currentColor" />
                             </svg>
-                            <p className="ai-enabled">✨ AI query enhancement enabled</p>
+                            <p className="ai-enabled">✨ AI query augmentation enabled</p>
                         </div>
                     )}
                 </div>
