@@ -6,7 +6,7 @@ import BatchAddReferencesModal from './components/BatchAddReferencesModal'
 import SearchBar from './components/SearchBar'
 import SettingsModal from './components/SettingsModal'
 import ScholarSearch from './components/ScholarSearch'
-import { savePDF } from './utils/pdfStorage'
+import { savePDF, deletePDF } from './utils/pdfStorage'
 import { extractPDFMetadata } from './utils/pdfMetadata'
 
 function App() {
@@ -24,6 +24,7 @@ function App() {
   const [droppedFiles, setDroppedFiles] = useState([])
   const [selectedReferenceIds, setSelectedReferenceIds] = useState([])
   const [isSelectionMode, setIsSelectionMode] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
 
   // Load references and collections from localStorage on mount
   useEffect(() => {
@@ -73,19 +74,22 @@ function App() {
     if (savedCollections) {
       setCollections(JSON.parse(savedCollections))
     }
+    setIsLoaded(true)
   }, [])
 
   // Save references to localStorage whenever they change
   useEffect(() => {
-    if (references.length > 0) {
+    if (isLoaded) {
       localStorage.setItem('references', JSON.stringify(references))
     }
-  }, [references])
+  }, [references, isLoaded])
 
   // Save collections to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('collections', JSON.stringify(collections))
-  }, [collections])
+    if (isLoaded) {
+      localStorage.setItem('collections', JSON.stringify(collections))
+    }
+  }, [collections, isLoaded])
 
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
 
@@ -163,6 +167,7 @@ function App() {
     if (selectedReference?.id === id) {
       setSelectedReference(null)
     }
+    deletePDF(id).catch(console.error)
   }
 
   const toggleReferenceSelection = (id) => {
@@ -187,6 +192,7 @@ function App() {
 
     const count = selectedReferenceIds.length
     if (window.confirm(`Are you sure you want to delete ${count} reference${count > 1 ? 's' : ''}? This action cannot be undone.`)) {
+      selectedReferenceIds.forEach(id => deletePDF(id).catch(console.error))
       setReferences(prev => prev.filter(ref => !selectedReferenceIds.includes(ref.id)))
       if (selectedReference && selectedReferenceIds.includes(selectedReference.id)) {
         setSelectedReference(null)
@@ -363,7 +369,7 @@ function App() {
         />
 
         <main
-          className="main-content"
+          className={`main-content ${selectedFolder === 'Search Scholar' ? 'no-padding' : ''}`}
         >
           {selectedFolder === 'Search Scholar' ? (
             <ScholarSearch onAddReference={addReference} />
