@@ -1,5 +1,3 @@
-import './SearchBar.css'
-
 export default function SearchBar({ searchQuery, setSearchQuery, resultCount }) {
     return (
         <div className="search-bar-container">

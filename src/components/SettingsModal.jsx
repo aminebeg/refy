@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import './SettingsModal.css'
 
 export default function SettingsModal({ onClose }) {
     const [apiKey, setApiKey] = useState('')

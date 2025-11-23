@@ -1,4 +1,3 @@
-import './Header.css'
 
 export default function Header({ onAddReference, viewMode, setViewMode }) {
     return (

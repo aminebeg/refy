@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import './ScholarSearch.css'
 import { enhanceSearchQuery } from '../utils/cerebrasService'
 import { getJournalRanking } from '../utils/journalRanking'
 

@@ -1,5 +1,3 @@
-import './ReferenceList.css'
-
 export default function ReferenceList({
     references,
     selectedReference,

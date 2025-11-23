@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import './TechnicalSheet.css'
 import { extractPDFText } from '../utils/pdfTextExtractor'
 import { analyzePaperWithCerebras } from '../utils/cerebrasService'
 import { getPDFBlob } from '../utils/pdfStorage'

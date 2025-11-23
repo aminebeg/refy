@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import './AddReferenceModal.css'
 import { extractPDFMetadata } from '../utils/pdfMetadata'
 import { savePDF } from '../utils/pdfStorage'
 

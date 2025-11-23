@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import './AddReferenceModal.css'
 import { extractPDFMetadata } from '../utils/pdfMetadata'
 
 export default function AddReferenceModal({ collections, onClose, onAdd, droppedFiles, currentFileIndex }) {
@@ -196,7 +195,7 @@ export default function AddReferenceModal({ collections, onClose, onAdd, dropped
                                 <span>Basic Information</span>
                                 <span className="required-badge">Required</span>
                             </div>
-                            <svg className={`chevron ${expandedSections.basic ? 'expanded' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <svg className={`chevron ${expandedSections.basic ? 'expanded' : ''} `} width="16" height="16" viewBox="0 0 16 16" fill="none">
                                 <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </button>
@@ -240,7 +239,7 @@ export default function AddReferenceModal({ collections, onClose, onAdd, dropped
                                 </svg>
                                 <span>Publication Details</span>
                             </div>
-                            <svg className={`chevron ${expandedSections.publication ? 'expanded' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <svg className={`chevron ${expandedSections.publication ? 'expanded' : ''} `} width="16" height="16" viewBox="0 0 16 16" fill="none">
                                 <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </button>
@@ -283,7 +282,7 @@ export default function AddReferenceModal({ collections, onClose, onAdd, dropped
                                 </svg>
                                 <span>Identifiers & Links</span>
                             </div>
-                            <svg className={`chevron ${expandedSections.identifiers ? 'expanded' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <svg className={`chevron ${expandedSections.identifiers ? 'expanded' : ''} `} width="16" height="16" viewBox="0 0 16 16" fill="none">
                                 <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </button>
@@ -310,7 +309,7 @@ export default function AddReferenceModal({ collections, onClose, onAdd, dropped
                                 </svg>
                                 <span>Abstract & Tags</span>
                             </div>
-                            <svg className={`chevron ${expandedSections.content ? 'expanded' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <svg className={`chevron ${expandedSections.content ? 'expanded' : ''} `} width="16" height="16" viewBox="0 0 16 16" fill="none">
                                 <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </button>
@@ -338,7 +337,7 @@ export default function AddReferenceModal({ collections, onClose, onAdd, dropped
                                     </svg>
                                     <span>Collections</span>
                                 </div>
-                                <svg className={`chevron ${expandedSections.organization ? 'expanded' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <svg className={`chevron ${expandedSections.organization ? 'expanded' : ''} `} width="16" height="16" viewBox="0 0 16 16" fill="none">
                                     <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                             </button>

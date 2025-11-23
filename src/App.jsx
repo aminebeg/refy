@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import './App.css'
 import Sidebar from './components/Sidebar'
 import ReferenceList from './components/ReferenceList'
 import ReferenceDetails from './components/ReferenceDetails'

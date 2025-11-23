@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import './Sidebar.css'
+import { X, Plus, Edit2, Trash2 } from 'lucide-react'
 
 export default function Sidebar({
     folders,
