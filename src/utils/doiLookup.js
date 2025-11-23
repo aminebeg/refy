@@ -64,6 +64,32 @@ export async function lookupDOI(doi) {
 
         console.log('DOI lookup successful:', item);
 
+        // Map CrossRef type to reference type
+        const typeMapping = {
+            'journal-article': 'Journal Article',
+            'proceedings-article': 'Conference Paper',
+            'book-chapter': 'Book Chapter',
+            'book': 'Book',
+            'monograph': 'Book',
+            'posted-content': 'Preprint',
+            'report': 'Technical Report',
+            'dissertation': 'Thesis'
+        };
+
+        const referenceType = typeMapping[item.type] || 'Journal Article';
+
+        // Extract editor information if available
+        const editors = item.editor?.map(e => {
+            const given = e.given || '';
+            const family = e.family || '';
+            return family ? `${family}, ${given}`.trim() : given;
+        }).filter(Boolean) || [];
+
+        // Get published date
+        const publishedDate = item.published?.['date-parts']?.[0];
+        const year = publishedDate?.[0] || new Date().getFullYear();
+        const month = publishedDate?.[1] ? publishedDate[1] : null;
+
         return {
             doi: cleanDOI,
             title: item.title?.[0] || '',
@@ -72,21 +98,47 @@ export async function lookupDOI(doi) {
                 const family = a.family || '';
                 return family ? `${family}, ${given}`.trim() : given;
             }).filter(Boolean) || [],
-            year: item.published?.['date-parts']?.[0]?.[0] || new Date().getFullYear(),
+            year: year,
+            month: month,
             journal: item['container-title']?.[0] || '',
             abstract: cleanAbstract(item.abstract) || '',
-            type: item.type || 'journal-article',
+            type: referenceType,
             volume: item.volume || '',
             issue: item.issue || '',
             pages: item.page || '',
+            articleNumber: item['article-number'] || '',
             publisher: item.publisher || '',
+            isbn: item.ISBN?.[0] || '',
+            issn: item.ISSN?.[0] || '',
             url: item.URL || `https://doi.org/${cleanDOI}`,
+            // Additional BibTeX fields
+            editors: editors,
+            series: item['container-title']?.[1] || '',
+            edition: item.edition || '',
+            // Full citation info for BibTeX generation
+            citationKey: generateCitationKey(item),
             source: 'CrossRef (DOI)'
         };
     } catch (error) {
         console.error('Error looking up DOI:', error);
         return null;
     }
+}
+
+/**
+ * Generate BibTeX citation key from metadata
+ * @param {Object} item - CrossRef metadata
+ * @returns {string} Citation key
+ */
+function generateCitationKey(item) {
+    const firstAuthor = item.author?.[0];
+    const lastName = firstAuthor?.family || 'Unknown';
+    const year = item.published?.['date-parts']?.[0]?.[0] || new Date().getFullYear();
+
+    // Clean last name (remove spaces, special characters)
+    const cleanLastName = lastName.replace(/[^a-zA-Z]/g, '');
+
+    return `${cleanLastName}${year}`;
 }
 
 /**

@@ -12,14 +12,16 @@ export default function ReferenceDetails({
     onDelete,
     onToggleFavorite
 }) {
-    const [isEditing, setIsEditing] = useState(false)
     const [notes, setNotes] = useState(reference.notes || '')
+    const [isEditing, setIsEditing] = useState(false)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-    const [selectedCollections, setSelectedCollections] = useState(reference.collectionIds || [])
     const [pdfUrl, setPdfUrl] = useState(null)
-    const [pdfFileName, setPdfFileName] = useState('')
-    const [showTechnicalSheet, setShowTechnicalSheet] = useState(false)
+    const [pdfFileName, setPdfFileName] = useState(null)
     const [isUploadingPdf, setIsUploadingPdf] = useState(false)
+    const [isEditingDoi, setIsEditingDoi] = useState(false)
+    const [editedDoi, setEditedDoi] = useState(reference.doi || '')
+    const [selectedCollections, setSelectedCollections] = useState(reference.collectionIds || [])
+    const [showTechnicalSheet, setShowTechnicalSheet] = useState(false)
 
     // Load PDF URL and filename from IndexedDB when component mounts
     useEffect(() => {
@@ -54,14 +56,85 @@ export default function ReferenceDetails({
     }
 
     const copyBibTeX = () => {
-        const bibtex = `@article{${reference.authors[0]?.split(',')[0]}${reference.year},
-  title={${reference.title}},
-  author={${reference.authors.join(' and ')}},
-  journal={${reference.journal || ''}},
-  year={${reference.year}}
-}`
-        navigator.clipboard.writeText(bibtex)
-        alert('BibTeX copied to clipboard!')
+        // Generate citation key
+        const firstAuthorLastName = reference.authors[0]?.split(',')[0]?.replace(/[^a-zA-Z]/g, '') || 'Unknown';
+        const citationKey = reference.citationKey || `${firstAuthorLastName}${reference.year}`;
+
+        // Determine BibTeX entry type
+        const entryTypeMap = {
+            'Journal Article': 'article',
+            'Conference Paper': 'inproceedings',
+            'Book Chapter': 'inbook',
+            'Book': 'book',
+            'Thesis': 'phdthesis',
+            'Technical Report': 'techreport',
+            'Preprint': 'misc'
+        };
+        const entryType = entryTypeMap[reference.type] || 'article';
+
+        // Build BibTeX entry
+        let bibtex = `@${entryType}{${citationKey},\n`;
+        bibtex += `  title={${reference.title}},\n`;
+
+        if (reference.authors && reference.authors.length > 0) {
+            bibtex += `  author={${reference.authors.join(' and ')}},\n`;
+        }
+
+        if (reference.editors && reference.editors.length > 0) {
+            bibtex += `  editor={${reference.editors.join(' and ')}},\n`;
+        }
+
+        if (reference.journal) {
+            bibtex += `  journal={${reference.journal}},\n`;
+        }
+
+        if (reference.year) {
+            bibtex += `  year={${reference.year}},\n`;
+        }
+
+        if (reference.volume) {
+            bibtex += `  volume={${reference.volume}},\n`;
+        }
+
+        if (reference.issue) {
+            bibtex += `  number={${reference.issue}},\n`;
+        }
+
+        if (reference.pages) {
+            bibtex += `  pages={${reference.pages}},\n`;
+        }
+
+        if (reference.doi) {
+            bibtex += `  doi={${reference.doi}},\n`;
+        }
+
+        if (reference.publisher) {
+            bibtex += `  publisher={${reference.publisher}},\n`;
+        }
+
+        if (reference.isbn) {
+            bibtex += `  isbn={${reference.isbn}},\n`;
+        }
+
+        if (reference.issn) {
+            bibtex += `  issn={${reference.issn}},\n`;
+        }
+
+        if (reference.url) {
+            bibtex += `  url={${reference.url}},\n`;
+        }
+
+        if (reference.abstract) {
+            // Escape special characters in abstract
+            const cleanAbstract = reference.abstract.replace(/[{}]/g, '');
+            bibtex += `  abstract={${cleanAbstract}},\n`;
+        }
+
+        // Remove trailing comma and newline, then close
+        bibtex = bibtex.slice(0, -2) + '\n}';
+
+        navigator.clipboard.writeText(bibtex);
+        alert('BibTeX copied to clipboard!');
     }
 
     const copyAPA = () => {
@@ -188,14 +261,9 @@ export default function ReferenceDetails({
 
                     <div className="details-section">
                         <h4 className="section-title">Authors</h4>
-                        <div className="authors-list">
-                            {reference.authors.map((author, index) => (
-                                <div key={index} className="author-item">
-                                    <span className="author-icon">👤</span>
-                                    {author}
-                                </div>
-                            ))}
-                        </div>
+                        <p className="authors-text">
+                            {reference.authors.join(', ')}
+                        </p>
                     </div>
 
                     {reference.journal && (
@@ -207,53 +275,108 @@ export default function ReferenceDetails({
 
                     <div className="details-section">
                         <h4 className="section-title">DOI (Digital Object Identifier)</h4>
-                        {reference.doi ? (
-                            <div className="doi-container">
-                                <div className="doi-display">
-                                    <a
-                                        href={`https://doi.org/${reference.doi}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="doi-link"
-                                        title="Open DOI link"
-                                    >
-                                        {reference.doi}
-                                    </a>
+                        <div className="doi-container">
+                            {isEditingDoi ? (
+                                <div className="doi-edit-container">
+                                    <input
+                                        type="text"
+                                        value={editedDoi}
+                                        onChange={(e) => setEditedDoi(e.target.value)}
+                                        className="doi-input"
+                                        placeholder="10.xxxx/xxxxx"
+                                    />
+                                    <div className="doi-edit-actions">
+                                        <button
+                                            className="btn btn-primary btn-sm"
+                                            onClick={() => {
+                                                onUpdate(reference.id, { doi: editedDoi });
+                                                setIsEditingDoi(false);
+                                            }}
+                                        >
+                                            Save
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary btn-sm"
+                                            onClick={() => {
+                                                setEditedDoi(reference.doi || '');
+                                                setIsEditingDoi(false);
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
                                 </div>
-                                <button
-                                    className="btn btn-primary btn-sm"
-                                    onClick={async () => {
-                                        const { lookupDOI } = await import('../utils/doiLookup');
-                                        const metadata = await lookupDOI(reference.doi);
-                                        if (metadata) {
-                                            // Update reference with fetched metadata
-                                            onUpdate(reference.id, {
-                                                title: metadata.title || reference.title,
-                                                authors: metadata.authors.length > 0 ? metadata.authors : reference.authors,
-                                                year: metadata.year || reference.year,
-                                                journal: metadata.journal || reference.journal,
-                                                abstract: metadata.abstract || reference.abstract,
-                                                type: metadata.type || reference.type
-                                            });
-                                            alert('Metadata updated from DOI!');
-                                        } else {
-                                            alert('Could not fetch metadata for this DOI');
-                                        }
-                                    }}
-                                    title="Fetch latest metadata from CrossRef using DOI"
-                                >
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginRight: '4px' }}>
-                                        <path d="M13.5 8a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z" stroke="currentColor" strokeWidth="1.5" />
-                                        <path d="M8 5v3l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                    </svg>
-                                    Lookup DOI
-                                </button>
-                            </div>
-                        ) : (
-                            <p className="text-secondary" style={{ fontSize: '0.875rem', fontStyle: 'italic' }}>
-                                No DOI available for this reference
-                            </p>
-                        )}
+                            ) : (
+                                <>
+                                    {reference.doi ? (
+                                        <div className="doi-display">
+                                            <a
+                                                href={`https://doi.org/${reference.doi}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="doi-link"
+                                                title="Open DOI link"
+                                            >
+                                                {reference.doi}
+                                            </a>
+                                            <button
+                                                className="btn btn-icon btn-sm"
+                                                onClick={() => setIsEditingDoi(true)}
+                                                title="Edit DOI"
+                                            >
+                                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                                    <path d="M10 1l3 3-8 8H2v-3l8-8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            className="btn btn-secondary btn-sm"
+                                            onClick={() => setIsEditingDoi(true)}
+                                        >
+                                            Add DOI
+                                        </button>
+                                    )}
+                                    {reference.doi && (
+                                        <button
+                                            className="btn btn-primary btn-sm"
+                                            onClick={async () => {
+                                                const { lookupDOI } = await import('../utils/doiLookup');
+                                                const metadata = await lookupDOI(reference.doi);
+                                                if (metadata) {
+                                                    onUpdate(reference.id, {
+                                                        title: metadata.title || reference.title,
+                                                        authors: metadata.authors.length > 0 ? metadata.authors : reference.authors,
+                                                        year: metadata.year || reference.year,
+                                                        journal: metadata.journal || reference.journal,
+                                                        abstract: metadata.abstract || reference.abstract,
+                                                        type: metadata.type || reference.type,
+                                                        volume: metadata.volume || reference.volume,
+                                                        issue: metadata.issue || reference.issue,
+                                                        pages: metadata.pages || reference.pages,
+                                                        doi: metadata.doi || reference.doi,
+                                                        publisher: metadata.publisher || reference.publisher,
+                                                        isbn: metadata.isbn || reference.isbn,
+                                                        issn: metadata.issn || reference.issn,
+                                                        url: metadata.url || reference.url
+                                                    });
+                                                    alert('Metadata updated from DOI!');
+                                                } else {
+                                                    alert('Could not fetch metadata for this DOI');
+                                                }
+                                            }}
+                                            title="Fetch latest metadata from CrossRef using DOI"
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginRight: '4px' }}>
+                                                <path d="M13.5 8a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z" stroke="currentColor" strokeWidth="1.5" />
+                                                <path d="M8 5v3l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                            </svg>
+                                            Lookup DOI
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
 
                     {/* PDF Section - Always visible */}
