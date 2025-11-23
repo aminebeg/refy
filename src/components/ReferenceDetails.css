@@ -123,42 +123,6 @@
 }
 
 .journal-name {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-    font-style: italic;
-}
-
-.pdf-info {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-md);
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-subtle);
-}
-
-.pdf-icon-wrapper {
-    flex-shrink: 0;
-    color: var(--danger-500);
-}
-
-.pdf-actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    flex: 1;
-}
-
-.pdf-actions .btn {
-    width: 100%;
-    justify-content: center;
-}
-
-.pdf-viewer-container {
-    margin-top: var(--spacing-md);
-    border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
     overflow: hidden;
     background: var(--bg-tertiary);
@@ -344,20 +308,6 @@
     color: var(--primary-400);
     text-decoration: none;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    word-break: break-all;
-    transition: color var(--transition-fast);
-}
-
-.doi-link:hover {
-    color: var(--primary-300);
-    text-decoration: underline;
-}
-
-@media (max-width: 768px) {
-    .reference-details {
-        max-width: 100%;
-    }
 
     .details-content {
         padding: var(--spacing-lg);
@@ -374,4 +324,87 @@
     .pdf-viewer-frame {
         height: 400px;
     }
+}
+
+/* PDF Section Styles */
+.pdf-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+}
+
+.pdf-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.pdf-icon-wrapper {
+    flex-shrink: 0;
+    color: var(--danger-500);
+}
+
+.pdf-filename {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filename-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+}
+
+.filename-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.pdf-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.pdf-actions .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.pdf-upload-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-xl);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    border: 2px dashed var(--border-subtle);
+    text-align: center;
+}
+
+.no-pdf-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    color: var(--text-tertiary);
+}
+
+.no-pdf-message p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.file-input-hidden {
+    display: none;
 }

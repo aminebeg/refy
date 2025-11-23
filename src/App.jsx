@@ -23,6 +23,8 @@ function App() {
   const [viewMode, setViewMode] = useState('list') // 'list' or 'grid'
   const [isDragging, setIsDragging] = useState(false)
   const [droppedFiles, setDroppedFiles] = useState([])
+  const [selectedReferenceIds, setSelectedReferenceIds] = useState([])
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
 
   // Load references and collections from localStorage on mount
   useEffect(() => {
@@ -164,6 +166,36 @@ function App() {
     }
   }
 
+  const toggleReferenceSelection = (id) => {
+    setSelectedReferenceIds(prev =>
+      prev.includes(id)
+        ? prev.filter(refId => refId !== id)
+        : [...prev, id]
+    )
+  }
+
+  const selectAllReferences = () => {
+    setSelectedReferenceIds(filteredReferences.map(ref => ref.id))
+  }
+
+  const clearSelection = () => {
+    setSelectedReferenceIds([])
+    setIsSelectionMode(false)
+  }
+
+  const deleteSelectedReferences = () => {
+    if (selectedReferenceIds.length === 0) return
+
+    const count = selectedReferenceIds.length
+    if (window.confirm(`Are you sure you want to delete ${count} reference${count > 1 ? 's' : ''}? This action cannot be undone.`)) {
+      setReferences(prev => prev.filter(ref => !selectedReferenceIds.includes(ref.id)))
+      if (selectedReference && selectedReferenceIds.includes(selectedReference.id)) {
+        setSelectedReference(null)
+      }
+      clearSelection()
+    }
+  }
+
   const toggleFavorite = (id) => {
     updateReference(id, {
       favorite: !references.find(ref => ref.id === id).favorite
@@ -200,13 +232,14 @@ function App() {
 
   // Batch add references
   const addReferencesBatch = (newRefs) => {
-    const refsWithIds = newRefs.map(ref => ({
+    const refsWithMetadata = newRefs.map(ref => ({
       ...ref,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-      isFavorite: false,
-      dateAdded: new Date().toISOString()
+      // Don't generate new IDs - use the ones from the modal that match the PDF storage
+      id: ref.id || (Date.now().toString() + Math.random().toString(36).substr(2, 5)),
+      isFavorite: ref.isFavorite || false,
+      dateAdded: ref.dateAdded || new Date().toISOString()
     }))
-    setReferences(prev => [...refsWithIds, ...prev])
+    setReferences(prev => [...refsWithMetadata, ...prev])
     // Reset batch state
     setIsAddModalOpen(false)
     setDroppedFiles([])
@@ -349,6 +382,13 @@ function App() {
                 onSelectReference={setSelectedReference}
                 onToggleFavorite={toggleFavorite}
                 viewMode={viewMode}
+                isSelectionMode={isSelectionMode}
+                selectedReferenceIds={selectedReferenceIds}
+                onToggleSelection={toggleReferenceSelection}
+                onEnterSelectionMode={() => setIsSelectionMode(true)}
+                onExitSelectionMode={clearSelection}
+                onSelectAll={selectAllReferences}
+                onDeleteSelected={deleteSelectedReferences}
               />
             </>
           )}

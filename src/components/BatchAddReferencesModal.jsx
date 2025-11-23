@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import './AddReferenceModal.css'
 import { extractPDFMetadata } from '../utils/pdfMetadata'
+import { savePDF } from '../utils/pdfStorage'
 
 export default function BatchAddReferencesModal({ collections, onClose, onAddBatch, droppedFiles }) {
     const [uploadedFiles, setUploadedFiles] = useState([])
@@ -44,13 +45,6 @@ export default function BatchAddReferencesModal({ collections, onClose, onAddBat
     const extractMetadataForFile = async (file, index) => {
         setIsExtracting(true)
 
-        // Read file as data URL
-        const reader = new FileReader()
-        reader.onloadend = () => {
-            setFormData(prev => ({ ...prev, pdf: reader.result }))
-        }
-        reader.readAsDataURL(file)
-
         try {
             const metadata = await extractPDFMetadata(file)
 
@@ -74,7 +68,7 @@ export default function BatchAddReferencesModal({ collections, onClose, onAddBat
                 url: metadata.url || '',
                 abstract: metadata.abstract || '',
                 tags: tagsArray.join(', '),
-                pdf: null,
+                pdfFile: file, // Store the actual file object
                 collectionIds: [],
                 source: metadata.source || 'PDF'
             })
@@ -103,13 +97,30 @@ export default function BatchAddReferencesModal({ collections, onClose, onAddBat
         setFormData({ ...formData, collectionIds: newCollections })
     }
 
-    const handleNext = () => {
+    const handleNext = async () => {
+        // Generate unique ID for this reference
+        const referenceId = Date.now().toString() + Math.random().toString(36).substr(2, 9)
+
+        // Save PDF to IndexedDB if available
+        if (formData.pdfFile) {
+            try {
+                await savePDF(referenceId, formData.pdfFile)
+                console.log('PDF saved to IndexedDB with ID:', referenceId)
+            } catch (error) {
+                console.error('Failed to save PDF to IndexedDB:', error)
+            }
+        }
+
         // Save current reference
         const reference = {
             ...formData,
+            id: referenceId, // Use the same ID we used for the PDF
+            pdfId: formData.pdfFile ? referenceId : null, // Store PDF ID if we have a PDF
+            hasPDF: !!formData.pdfFile, // Flag to indicate PDF is available
             authors: formData.authors.split(',').map(a => a.trim()).filter(Boolean),
             tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
-            year: parseInt(formData.year)
+            year: parseInt(formData.year),
+            pdfFile: undefined // Remove the file object from the reference data
         }
 
         setAllReferences([...allReferences, reference])

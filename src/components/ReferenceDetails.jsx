@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import './ReferenceDetails.css'
-import { getPDFUrl, getPDFBlob } from '../utils/pdfStorage'
+import { getPDFUrl, getPDFBlob, savePDF } from '../utils/pdfStorage'
+import { extractPDFMetadata } from '../utils/pdfMetadata'
 import TechnicalSheet from './TechnicalSheet'
 
 export default function ReferenceDetails({
@@ -16,14 +17,20 @@ export default function ReferenceDetails({
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [selectedCollections, setSelectedCollections] = useState(reference.collectionIds || [])
     const [pdfUrl, setPdfUrl] = useState(null)
+    const [pdfFileName, setPdfFileName] = useState('')
     const [showTechnicalSheet, setShowTechnicalSheet] = useState(false)
+    const [isUploadingPdf, setIsUploadingPdf] = useState(false)
 
-    // Load PDF URL from IndexedDB when component mounts
+    // Load PDF URL and filename from IndexedDB when component mounts
     useEffect(() => {
         const loadPDF = async () => {
             if (reference.pdfId || reference.hasPDF) {
-                const url = await getPDFUrl(reference.pdfId || reference.id)
-                setPdfUrl(url)
+                const pdfData = await getPDFBlob(reference.pdfId || reference.id)
+                if (pdfData) {
+                    const url = URL.createObjectURL(pdfData.blob)
+                    setPdfUrl(url)
+                    setPdfFileName(pdfData.name)
+                }
             }
         }
         loadPDF()
@@ -87,6 +94,57 @@ export default function ReferenceDetails({
 
         setSelectedCollections(newCollections)
         onUpdate(reference.id, { collectionIds: newCollections })
+    }
+
+    const handlePdfUpload = async (e) => {
+        const file = e.target.files[0]
+        if (!file) return
+
+        if (file.type !== 'application/pdf') {
+            alert('Please select a PDF file')
+            return
+        }
+
+        setIsUploadingPdf(true)
+        try {
+            // Save PDF to IndexedDB
+            const pdfId = reference.pdfId || reference.id
+            await savePDF(pdfId, file)
+
+            // Extract metadata and update reference if fields are empty
+            const metadata = await extractPDFMetadata(file)
+            const updates = {
+                pdfId: pdfId,
+                hasPDF: true
+            }
+
+            // Only update empty fields
+            if (!reference.title && metadata.title) updates.title = metadata.title
+            if ((!reference.authors || reference.authors.length === 0) && metadata.authors?.length > 0) {
+                updates.authors = metadata.authors
+            }
+            if (!reference.year && metadata.year) updates.year = metadata.year
+            if (!reference.journal && metadata.journal) updates.journal = metadata.journal
+            if (!reference.abstract && metadata.abstract) updates.abstract = metadata.abstract
+            if (!reference.doi && metadata.doi) updates.doi = metadata.doi
+            if (metadata.journalRanking && !reference.tags?.includes(metadata.journalRanking)) {
+                updates.tags = [...(reference.tags || []), metadata.journalRanking]
+            }
+
+            onUpdate(reference.id, updates)
+
+            // Load the PDF for display
+            const url = URL.createObjectURL(file)
+            setPdfUrl(url)
+            setPdfFileName(file.name)
+
+            alert('PDF uploaded successfully!')
+        } catch (error) {
+            console.error('Error uploading PDF:', error)
+            alert('Failed to upload PDF. Please try again.')
+        } finally {
+            setIsUploadingPdf(false)
+        }
     }
 
     return (
@@ -198,16 +256,23 @@ export default function ReferenceDetails({
                         )}
                     </div>
 
-                    {(reference.hasPDF || reference.pdfId || pdfUrl) && (
-                        <div className="details-section">
-                            <h4 className="section-title">PDF Document</h4>
+                    {/* PDF Section - Always visible */}
+                    <div className="details-section">
+                        <h4 className="section-title">PDF Document</h4>
+                        {(reference.hasPDF || reference.pdfId || pdfUrl) ? (
                             <div className="pdf-info">
-                                <div className="pdf-icon-wrapper">
-                                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                                        <path d="M12 6h20l8 8v26a2 2 0 01-2 2H12a2 2 0 01-2-2V8a2 2 0 012-2z" fill="var(--danger-500)" />
-                                        <path d="M32 6v8h8" stroke="var(--bg-primary)" strokeWidth="2" />
-                                        <text x="24" y="32" fontSize="10" fill="white" textAnchor="middle" fontWeight="bold">PDF</text>
-                                    </svg>
+                                <div className="pdf-header">
+                                    <div className="pdf-icon-wrapper">
+                                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                            <path d="M12 6h20l8 8v26a2 2 0 01-2 2H12a2 2 0 01-2-2V8a2 2 0 012-2z" fill="var(--danger-500)" />
+                                            <path d="M32 6v8h8" stroke="var(--bg-primary)" strokeWidth="2" />
+                                            <text x="24" y="32" fontSize="10" fill="white" textAnchor="middle" fontWeight="bold">PDF</text>
+                                        </svg>
+                                    </div>
+                                    <div className="pdf-filename">
+                                        <div className="filename-label">Attached PDF:</div>
+                                        <div className="filename-text">{pdfFileName || 'document.pdf'}</div>
+                                    </div>
                                 </div>
                                 <div className="pdf-actions">
                                     <button
@@ -229,8 +294,43 @@ export default function ReferenceDetails({
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="pdf-upload-section">
+                                <div className="no-pdf-message">
+                                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" opacity="0.3">
+                                        <path d="M20 12h20l12 12v28a4 4 0 01-4 4H20a4 4 0 01-4-4V16a4 4 0 014-4z" stroke="currentColor" strokeWidth="3" />
+                                        <path d="M40 12v12h12" stroke="currentColor" strokeWidth="3" />
+                                        <path d="M32 32v8m-4-4h8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                                    </svg>
+                                    <p>No PDF attached to this reference</p>
+                                </div>
+                                <input
+                                    type="file"
+                                    id="pdf-upload-input"
+                                    accept=".pdf"
+                                    onChange={handlePdfUpload}
+                                    className="file-input-hidden"
+                                    disabled={isUploadingPdf}
+                                />
+                                <label htmlFor="pdf-upload-input" className="btn btn-primary" style={{ marginTop: '12px', cursor: isUploadingPdf ? 'wait' : 'pointer' }}>
+                                    {isUploadingPdf ? (
+                                        <>
+                                            <div className="spinner-small" style={{ marginRight: '8px' }}></div>
+                                            Uploading...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginRight: '6px' }}>
+                                                <path d="M8 10V2m0 0L5 5m3-3l3 3M3 13h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                            </svg>
+                                            Upload PDF
+                                        </>
+                                    )}
+                                </label>
+                                <p className="text-xs text-tertiary" style={{ marginTop: '8px', textAlign: 'center' }}>Metadata will be extracted automatically</p>
+                            </div>
+                        )}
+                    </div>
 
                     {reference.abstract && (
                         <div className="details-section">
