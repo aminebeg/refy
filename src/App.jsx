@@ -6,6 +6,7 @@ import BatchAddReferencesModal from './components/BatchAddReferencesModal'
 import SearchBar from './components/SearchBar'
 import SettingsModal from './components/SettingsModal'
 import ScholarSearch from './components/ScholarSearch'
+import NoveltyEvaluator from './components/NoveltyEvaluator'
 import { savePDF, deletePDF } from './utils/pdfStorage'
 import { extractPDFMetadata } from './utils/pdfMetadata'
 
@@ -369,10 +370,12 @@ function App() {
         />
 
         <main
-          className={`main-content ${selectedFolder === 'Search Scholar' ? 'no-padding' : ''}`}
+          className={`main-content ${selectedFolder === 'Search Scholar' || selectedFolder === 'Novelty Evaluator' ? 'no-padding' : ''}`}
         >
           {selectedFolder === 'Search Scholar' ? (
             <ScholarSearch onAddReference={addReference} />
+          ) : selectedFolder === 'Novelty Evaluator' ? (
+            <NoveltyEvaluator />
           ) : (
             <>
               <SearchBar

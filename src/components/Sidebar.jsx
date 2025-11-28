@@ -171,6 +171,16 @@ export default function Sidebar({
                         <span className="sidebar-icon">🔍</span>
                         <span className="sidebar-label">Search Scholar</span>
                     </button>
+                    <button
+                        className={`sidebar-item ${selectedFolder === 'Novelty Evaluator' && !selectedCollection ? 'active' : ''}`}
+                        onClick={() => {
+                            onSelectFolder('Novelty Evaluator')
+                            onSelectCollection(null)
+                        }}
+                    >
+                        <span className="sidebar-icon">✨</span>
+                        <span className="sidebar-label">Novelty Evaluator</span>
+                    </button>
                 </nav>
             </div>
 
