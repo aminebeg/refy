@@ -1,4 +1,8 @@
+import { useTranslation } from 'react-i18next'
+
 export default function SearchBar({ searchQuery, setSearchQuery, resultCount }) {
+    const { t } = useTranslation()
+
     return (
         <div className="search-bar-container">
             <div className="search-bar">
@@ -9,7 +13,7 @@ export default function SearchBar({ searchQuery, setSearchQuery, resultCount }) 
                 <input
                     type="text"
                     className="search-input"
-                    placeholder="Search by title, author, tags, or abstract..."
+                    placeholder={t('search.placeholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -17,7 +21,7 @@ export default function SearchBar({ searchQuery, setSearchQuery, resultCount }) 
                     <button
                         className="search-clear"
                         onClick={() => setSearchQuery('')}
-                        title="Clear search"
+                        title={t('common.close')}
                     >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -27,7 +31,7 @@ export default function SearchBar({ searchQuery, setSearchQuery, resultCount }) 
             </div>
             {searchQuery && (
                 <div className="search-results-info fade-in">
-                    Found {resultCount} {resultCount === 1 ? 'result' : 'results'}
+                    {t('search.results')}: {resultCount}
                 </div>
             )}
         </div>

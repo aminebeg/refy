@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 export default function ReferenceList({
     references,
     selectedReference,
@@ -12,12 +14,14 @@ export default function ReferenceList({
     onSelectAll,
     onDeleteSelected
 }) {
+    const { t } = useTranslation()
+
     if (references.length === 0) {
         return (
             <div className="empty-state">
                 <div className="empty-icon">📚</div>
-                <h3>No references found</h3>
-                <p>Start building your library by adding your first reference</p>
+                <h3>{t('referenceList.noReferences')}</h3>
+                <p>{t('referenceList.startBuilding')}</p>
             </div>
         )
     }
@@ -38,8 +42,8 @@ export default function ReferenceList({
                             />
                             <span>
                                 {selectedReferenceIds.length > 0
-                                    ? `${selectedReferenceIds.length} selected`
-                                    : 'Select all'}
+                                    ? `${selectedReferenceIds.length} ${t('referenceList.selected')}`
+                                    : t('referenceList.selectAll')}
                             </span>
                         </label>
                     </div>
@@ -52,14 +56,14 @@ export default function ReferenceList({
                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                                     <path d="M2 3h10M5 3V2a1 1 0 011-1h2a1 1 0 011 1v1M11 3v8a1 1 0 01-1 1H4a1 1 0 01-1-1V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                                 </svg>
-                                Delete {selectedReferenceIds.length}
+                                {t('referenceList.deleteSelected')} {selectedReferenceIds.length}
                             </button>
                         )}
                         <button
                             className="btn btn-secondary btn-sm"
                             onClick={onExitSelectionMode}
                         >
-                            Cancel
+                            {t('common.cancel')}
                         </button>
                     </div>
                 </div>
@@ -92,7 +96,7 @@ export default function ReferenceList({
                                     {reference.type}
                                 </div>
                                 {(reference.hasPDF || reference.pdfId) && (
-                                    <div className="indicator-badge pdf-indicator" title="PDF attached">
+                                    <div className="indicator-badge pdf-indicator" title={t('referenceList.pdfAttached')}>
                                         <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                                             <path d="M3 1h5l3 3v6a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1z" fill="currentColor" />
                                             <path d="M8 1v3h3" stroke="white" strokeWidth="0.5" />

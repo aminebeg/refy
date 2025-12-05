@@ -33,6 +33,20 @@ A beautiful, modern web-based reference management system for researchers, simil
 - Tag-based filtering
 - Sort and organize your library
 
+### 🌍 Multi-Language Support
+- **3 Languages**: Full support for English, French, and Arabic
+- **Instant Switching**: Change language on-the-fly from Settings
+- **RTL Layout**: Automatic right-to-left layout for Arabic
+- **Persistent Selection**: Your language preference is saved
+- **Auto-Detection**: Automatically detects browser language on first visit
+
+### 🔬 Advanced Research Tools
+- **Scholar Search**: Search 200M+ academic papers via Semantic Scholar
+- **AI-Enhanced Search**: Optional AI query augmentation for better results
+- **Novelty Evaluator**: Get brutal, honest feedback on research novelty
+- **Quality Filters**: Filter by journal rankings (Q1-Q4)
+- **Publication Types**: Filter by arXiv, conferences, and journals
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -69,6 +83,9 @@ http://localhost:5173
 - **Font**: Inter (Google Fonts)
 - **State Management**: React Hooks (useState, useEffect)
 - **Data Persistence**: localStorage
+- **Internationalization**: i18next, react-i18next (3 languages: EN, FR, AR)
+- **API Integration**: Semantic Scholar API, Cerebras AI, Google Gemini
+- **PDF Processing**: PDF.js for metadata extraction
 
 ## 📁 Project Structure
 
@@ -77,21 +94,36 @@ client/
 ├── src/
 │   ├── components/
 │   │   ├── Header.jsx              # Top navigation bar
-│   │   ├── Header.css
 │   │   ├── Sidebar.jsx             # Left sidebar navigation
-│   │   ├── Sidebar.css
 │   │   ├── SearchBar.jsx           # Search input with filters
-│   │   ├── SearchBar.css
 │   │   ├── ReferenceList.jsx       # Main reference display
-│   │   ├── ReferenceList.css
 │   │   ├── ReferenceDetails.jsx    # Slide-out details panel
-│   │   ├── ReferenceDetails.css
 │   │   ├── AddReferenceModal.jsx   # Add new reference form
-│   │   └── AddReferenceModal.css
+│   │   ├── BatchAddReferencesModal.jsx  # Batch PDF import
+│   │   ├── SettingsModal.jsx       # Settings with language selector
+│   │   ├── LanguageSwitcher.jsx    # Language selection component
+│   │   ├── ScholarSearch.jsx       # Academic paper search
+│   │   ├── NoveltyEvaluator.jsx    # AI-powered novelty evaluation
+│   │   └── TechnicalSheet.jsx      # Technical review sheet
+│   ├── i18n/
+│   │   ├── config.js               # i18next configuration
+│   │   └── locales/
+│   │       ├── en.json             # English translations
+│   │       ├── fr.json             # French translations
+│   │       └── ar.json             # Arabic translations
+│   ├── utils/
+│   │   ├── academicSearch.js       # Semantic Scholar integration
+│   │   ├── cerebrasService.js      # Cerebras AI API
+│   │   ├── geminiService.js        # Google Gemini API
+│   │   ├── journalRanking.js       # Journal quality rankings
+│   │   ├── pdfMetadata.js          # PDF metadata extraction
+│   │   └── pdfStorage.js           # IndexedDB PDF storage
 │   ├── App.jsx                     # Main application component
-│   ├── App.css
 │   ├── main.jsx                    # Application entry point
-│   └── index.css                   # Global styles & design system
+│   ├── styles.css                  # Global styles & design system
+│   └── novelty-evaluator.css      # Novelty evaluator styles
+├── docs/
+│   └── I18N.md                     # Internationalization guide
 ├── index.html
 └── package.json
 ```
@@ -140,8 +172,6 @@ Click any reference to open the details panel, then use the export buttons to co
 - **BibTeX**: For LaTeX documents
 - **APA**: For APA-style citations
 
-### Notes
-Add personal notes to any reference through the details panel. Notes are automatically saved.
 
 ## 🔮 Future Enhancements
 
@@ -177,6 +207,7 @@ MIT License - feel free to use and modify as needed.
 3. **User-Friendly**: Intuitive interface requiring no learning curve
 4. **Data Privacy**: All data stored locally in the browser
 5. **Accessibility**: Keyboard navigation and screen reader support
+6. **Global Reach**: Multi-language support for international researchers
 
 ---
 
