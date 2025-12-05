@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X, Plus, Edit2, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export default function Sidebar({
     folders,
@@ -18,6 +19,7 @@ export default function Sidebar({
     setViewMode,
     onOpenSettings
 }) {
+    const { t } = useTranslation()
     const [isAddingCollection, setIsAddingCollection] = useState(false)
     const [newCollectionName, setNewCollectionName] = useState('')
     const [editingCollectionId, setEditingCollectionId] = useState(null)
@@ -104,10 +106,10 @@ export default function Sidebar({
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <path d="M8 3v10M13 8H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                         </svg>
-                        <span>{isDraggingOver ? 'Drop PDFs here' : 'Add Reference'}</span>
+                        <span>{isDraggingOver ? t('batchAdd.dragDrop') : t('header.addReference')}</span>
                     </label>
                     {!isDraggingOver && (
-                        <div className="add-ref-hint">Click or drop PDFs</div>
+                        <div className="add-ref-hint">{t('batchAdd.orClick')}</div>
                     )}
                 </div>
 
@@ -115,7 +117,7 @@ export default function Sidebar({
                     <button
                         className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
                         onClick={() => setViewMode('list')}
-                        title="List View"
+                        title={t('search.listView')}
                     >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor" />
@@ -126,7 +128,7 @@ export default function Sidebar({
                     <button
                         className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
                         onClick={() => setViewMode('grid')}
-                        title="Grid View"
+                        title={t('search.gridView')}
                     >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <rect x="2" y="2" width="5" height="5" rx="1" fill="currentColor" />
@@ -155,7 +157,11 @@ export default function Sidebar({
                                 {folder === 'Recently Added' && '🕐'}
                                 {folder === 'Favorites' && '⭐'}
                             </span>
-                            <span className="sidebar-label">{folder}</span>
+                            <span className="sidebar-label">
+                                {folder === 'All Papers' && t('sidebar.allPapers')}
+                                {folder === 'Recently Added' && t('sidebar.recentlyAdded')}
+                                {folder === 'Favorites' && t('sidebar.favorites')}
+                            </span>
                             {folder === 'All Papers' && (
                                 <span className="sidebar-count">{referenceCount}</span>
                             )}
@@ -169,7 +175,7 @@ export default function Sidebar({
                         }}
                     >
                         <span className="sidebar-icon">🔍</span>
-                        <span className="sidebar-label">Search Scholar</span>
+                        <span className="sidebar-label">{t('sidebar.searchScholar')}</span>
                     </button>
                     <button
                         className={`sidebar-item ${selectedFolder === 'Novelty Evaluator' && !selectedCollection ? 'active' : ''}`}
@@ -179,18 +185,18 @@ export default function Sidebar({
                         }}
                     >
                         <span className="sidebar-icon">✨</span>
-                        <span className="sidebar-label">Novelty Evaluator</span>
+                        <span className="sidebar-label">{t('sidebar.noveltyEvaluator')}</span>
                     </button>
                 </nav>
             </div>
 
             <div className="sidebar-section">
                 <div className="sidebar-header">
-                    <h3 className="sidebar-title">Collections</h3>
+                    <h3 className="sidebar-title">{t('sidebar.collections')}</h3>
                     <button
                         className="btn-icon-small"
                         onClick={() => setIsAddingCollection(true)}
-                        title="Add Collection"
+                        title={t('collections.newCollection')}
                     >
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                             <path d="M7 3v8M11 7H3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -216,7 +222,7 @@ export default function Sidebar({
                             autoFocus
                         />
                         <div className="collection-form-actions">
-                            <button className="btn-xs btn-primary" onClick={handleAddCollection}>Add</button>
+                            <button className="btn-xs btn-primary" onClick={handleAddCollection}>{t('common.add')}</button>
                             <button
                                 className="btn-xs btn-secondary"
                                 onClick={() => {
@@ -224,7 +230,7 @@ export default function Sidebar({
                                     setNewCollectionName('')
                                 }}
                             >
-                                Cancel
+                                {t('common.cancel')}
                             </button>
                         </div>
                     </div>
@@ -233,7 +239,7 @@ export default function Sidebar({
                 <nav className="sidebar-nav">
                     {collections.length === 0 && !isAddingCollection && (
                         <div className="empty-collections">
-                            <span className="text-xs text-tertiary">No collections yet</span>
+                            <span className="text-xs text-tertiary">{t('collections.noCollections')}</span>
                         </div>
                     )}
                     {collections.map(collection => (
@@ -255,7 +261,7 @@ export default function Sidebar({
                                         autoFocus
                                     />
                                     <div className="collection-form-actions">
-                                        <button className="btn-xs btn-primary" onClick={() => handleRenameCollection(collection.id)}>Save</button>
+                                        <button className="btn-xs btn-primary" onClick={() => handleRenameCollection(collection.id)}>{t('common.save')}</button>
                                         <button
                                             className="btn-xs btn-secondary"
                                             onClick={() => {
@@ -263,25 +269,25 @@ export default function Sidebar({
                                                 setEditingName('')
                                             }}
                                         >
-                                            Cancel
+                                            {t('common.cancel')}
                                         </button>
                                     </div>
                                 </div>
                             ) : deletingCollectionId === collection.id ? (
                                 <div className="delete-collection-confirm">
-                                    <p className="text-sm mb-1">Delete "{collection.name}"?</p>
+                                    <p className="text-sm mb-1">{t('collections.deleteCollection')} "{collection.name}"?</p>
                                     <div className="collection-form-actions">
                                         <button
                                             className="btn-xs btn-danger"
                                             onClick={() => handleDeleteCollection(collection.id)}
                                         >
-                                            Yes, Delete
+                                            {t('editReference.yesDelete')}
                                         </button>
                                         <button
                                             className="btn-xs btn-secondary"
                                             onClick={() => setDeletingCollectionId(null)}
                                         >
-                                            Cancel
+                                            {t('common.cancel')}
                                         </button>
                                     </div>
                                 </div>
@@ -305,7 +311,7 @@ export default function Sidebar({
                                                 e.stopPropagation()
                                                 startEditingCollection(collection)
                                             }}
-                                            title="Rename"
+                                            title={t('sidebar.editCollection')}
                                         >
                                             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                                                 <path d="M8.5 1.5l2 2L4 10H2v-2L8.5 1.5z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
@@ -317,7 +323,7 @@ export default function Sidebar({
                                                 e.stopPropagation()
                                                 setDeletingCollectionId(collection.id)
                                             }}
-                                            title="Delete"
+                                            title={t('sidebar.deleteCollection')}
                                         >
                                             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                                                 <path d="M2 2.5h8M3.5 2.5V2a.5.5 0 01.5-.5h4a.5.5 0 01.5.5v.5M9.5 2.5v7a1 1 0 01-1 1h-5a1 1 0 01-1-1v-7" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
@@ -347,7 +353,7 @@ export default function Sidebar({
 
                 <button className="sidebar-item mt-4" onClick={onOpenSettings}>
                     <span className="sidebar-icon">⚙️</span>
-                    <span className="sidebar-label">Settings</span>
+                    <span className="sidebar-label">{t('settings.title')}</span>
                 </button>
             </div>
         </aside>

@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { enhanceSearchQuery } from '../utils/cerebrasService'
 import { getJournalRanking } from '../utils/journalRanking'
 
 export default function ScholarSearch({ onAddReference }) {
+    const { t } = useTranslation()
     const [searchQuery, setSearchQuery] = useState('')
     const [isSearching, setIsSearching] = useState(false)
     const [isEnhancing, setIsEnhancing] = useState(false)
@@ -137,10 +139,10 @@ export default function ScholarSearch({ onAddReference }) {
 
         const button = document.querySelector(`[data-paper-id="${result.paperId}"]`)
         if (button) {
-            button.textContent = '✓ Added!'
+            button.textContent = `✓ ${t('scholarSearch.added')}`
             button.classList.add('added')
             setTimeout(() => {
-                button.textContent = 'Add to Library'
+                button.textContent = t('scholarSearch.addToLibrary')
                 button.classList.remove('added')
             }, 2000)
         }
@@ -223,14 +225,14 @@ export default function ScholarSearch({ onAddReference }) {
                             <input
                                 type="text"
                                 className="scholar-search-input"
-                                placeholder="Search papers, authors, concepts..."
+                                placeholder={t('scholarSearch.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                             {isEnhancing && (
                                 <div className="ai-enhancing-badge">
                                     <div className="mini-spinner"></div>
-                                    <span>AI Augmenting...</span>
+                                    <span>{t('scholarSearch.aiAugmenting')}</span>
                                 </div>
                             )}
                         </div>
@@ -243,7 +245,7 @@ export default function ScholarSearch({ onAddReference }) {
                             {isSearching ? (
                                 <>
                                     <div className="spinner-small"></div>
-                                    Searching...
+                                    {t('scholarSearch.searching')}
                                 </>
                             ) : (
                                 <>
@@ -251,7 +253,7 @@ export default function ScholarSearch({ onAddReference }) {
                                         <circle cx="7.5" cy="7.5" r="5" stroke="currentColor" strokeWidth="2" />
                                         <path d="M11 11l4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                                     </svg>
-                                    Search
+                                    {t('scholarSearch.search')}
                                 </>
                             )}
                         </button>
@@ -267,7 +269,7 @@ export default function ScholarSearch({ onAddReference }) {
                                 />
                                 <span className="toggle-slider"></span>
                                 <span className="toggle-label">
-                                    <span className="ai-label-text">AI Augment</span>
+                                    <span className="ai-label-text">{t('scholarSearch.aiAugment')}</span>
                                     {enableAI && <span className="ai-sparkle">✨</span>}
                                 </span>
                             </label>
@@ -281,7 +283,7 @@ export default function ScholarSearch({ onAddReference }) {
                                     onChange={(e) => setShowArxiv(e.target.checked)}
                                 />
                                 <span className="toggle-slider"></span>
-                                <span className="toggle-label">Show arXiv</span>
+                                <span className="toggle-label">{t('scholarSearch.showArxiv')}</span>
                             </label>
 
                             <label className="toggle-switch">
@@ -291,7 +293,7 @@ export default function ScholarSearch({ onAddReference }) {
                                     onChange={(e) => setShowConferences(e.target.checked)}
                                 />
                                 <span className="toggle-slider"></span>
-                                <span className="toggle-label">Show Conferences</span>
+                                <span className="toggle-label">{t('scholarSearch.showConferences')}</span>
                             </label>
                         </div>
 
@@ -301,9 +303,9 @@ export default function ScholarSearch({ onAddReference }) {
                                 value={selectedYear}
                                 onChange={(e) => setSelectedYear(e.target.value)}
                             >
-                                <option value="all">All Years</option>
-                                <option value="recent">Last 2 Years</option>
-                                <option value="5years">Last 5 Years</option>
+                                <option value="all">{t('scholarSearch.allYears')}</option>
+                                <option value="recent">{t('scholarSearch.last2Years')}</option>
+                                <option value="5years">{t('scholarSearch.last5Years')}</option>
                                 <option value="2024">2024</option>
                                 <option value="2023">2023</option>
                             </select>
@@ -313,11 +315,11 @@ export default function ScholarSearch({ onAddReference }) {
                                 value={qualityFilter}
                                 onChange={(e) => setQualityFilter(e.target.value)}
                             >
-                                <option value="all">All Qualities</option>
-                                <option value="q1">Q1 (Top Tier)</option>
-                                <option value="q2">Q2 (High Impact)</option>
-                                <option value="q3">Q3 (Standard)</option>
-                                <option value="q4">Q4 (Emerging)</option>
+                                <option value="all">{t('scholarSearch.allQualities')}</option>
+                                <option value="q1">{t('scholarSearch.q1TopTier')}</option>
+                                <option value="q2">{t('scholarSearch.q2HighImpact')}</option>
+                                <option value="q3">{t('scholarSearch.q3Standard')}</option>
+                                <option value="q4">{t('scholarSearch.q4Emerging')}</option>
                             </select>
                         </div>
                     </div>
@@ -330,7 +332,7 @@ export default function ScholarSearch({ onAddReference }) {
                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                                     <path d="M7 0.5L8.5 5.5L13.5 7L8.5 8.5L7 13.5L5.5 8.5L0.5 7L5.5 5.5L7 0.5Z" fill="currentColor" />
                                 </svg>
-                                AI Augmented Query:
+                                {t('scholarSearch.aiAugmentedQuery')}
                             </span>
                             <span className="enhanced-text">{currentQuery}</span>
                         </div>
@@ -351,14 +353,14 @@ export default function ScholarSearch({ onAddReference }) {
             {isSearching && (
                 <div className="scholar-loading">
                     <div className="spinner-large"></div>
-                    <p>Searching Semantic Scholar database...</p>
+                    <p>{t('scholarSearch.searchingDatabase')}</p>
                 </div>
             )}
 
             {!isSearching && filteredResults.length > 0 && (
                 <div className="scholar-results">
                     <div className="results-header">
-                        <h2>Found {filteredResults.length} results {searchResults.length !== filteredResults.length && `(filtered from ${searchResults.length})`} {hasMore && '+'}</h2>
+                        <h2>{t('scholarSearch.found')} {filteredResults.length} {t('scholarSearch.results').toLowerCase()} {searchResults.length !== filteredResults.length && `(${t('scholarSearch.filteredFrom')} ${searchResults.length})`} {hasMore && '+'}</h2>
                     </div>
                     <div className="results-list">
                         {filteredResults.map((result, index) => {
@@ -387,7 +389,7 @@ export default function ScholarSearch({ onAddReference }) {
                                             {result.authors && result.authors.length > 0 && (
                                                 <span className="result-authors">
                                                     {result.authors.slice(0, 3).map(a => a.name).join(', ')}
-                                                    {result.authors.length > 3 && ' et al.'}
+                                                    {result.authors.length > 3 && ` ${t('scholarSearch.etAl')}`}
                                                 </span>
                                             )}
                                             {result.venue && (
@@ -409,7 +411,7 @@ export default function ScholarSearch({ onAddReference }) {
                                         <div className="result-footer">
                                             {result.citationCount !== null && result.citationCount !== undefined && (
                                                 <span className="result-citations">
-                                                    📊 {result.citationCount} citations
+                                                    📊 {result.citationCount} {t('scholarSearch.citations')}
                                                 </span>
                                             )}
                                             {result.externalIds?.DOI && (
@@ -428,7 +430,7 @@ export default function ScholarSearch({ onAddReference }) {
                                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                                 <path d="M8 3v10M13 8H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                                             </svg>
-                                            Add to Library
+                                            {t('scholarSearch.addToLibrary')}
                                         </button>
                                         {result.url && (
                                             <a
@@ -440,7 +442,7 @@ export default function ScholarSearch({ onAddReference }) {
                                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                                     <path d="M12 8.5v3a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 012 11.5v-7A1.5 1.5 0 013.5 3h3M9 2h5v5M6.5 9.5L14 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                                 </svg>
-                                                View
+                                                {t('scholarSearch.view')}
                                             </a>
                                         )}
                                     </div>
@@ -459,10 +461,10 @@ export default function ScholarSearch({ onAddReference }) {
                                 {isLoadingMore ? (
                                     <>
                                         <div className="spinner-small"></div>
-                                        Loading more...
+                                        {t('scholarSearch.loadingMore')}
                                     </>
                                 ) : (
-                                    'Load More Results'
+                                    t('scholarSearch.loadMore')
                                 )}
                             </button>
                         </div>
@@ -476,8 +478,8 @@ export default function ScholarSearch({ onAddReference }) {
                         <path d="M32 8v48M8 32h48" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.2" />
                         <circle cx="32" cy="32" r="12" stroke="currentColor" strokeWidth="2" opacity="0.2" />
                     </svg>
-                    <h3>No results match your filters</h3>
-                    <p>Try adjusting your filters to see more results</p>
+                    <h3>{t('scholarSearch.noResultsFilters')}</h3>
+                    <p>{t('scholarSearch.adjustFilters')}</p>
                 </div>
             )}
 
@@ -487,8 +489,8 @@ export default function ScholarSearch({ onAddReference }) {
                         <circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="2" opacity="0.2" />
                         <path d="M26 26l12 12M38 26l-12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                     </svg>
-                    <h3>No results found</h3>
-                    <p>Try different keywords or adjust your filters</p>
+                    <h3>{t('scholarSearch.noResults')}</h3>
+                    <p>{t('scholarSearch.tryDifferentKeywords')}</p>
                 </div>
             )}
 
@@ -504,8 +506,8 @@ export default function ScholarSearch({ onAddReference }) {
                             </linearGradient>
                         </defs>
                     </svg>
-                    <h3>Search 200M+ Academic Papers</h3>
-                    <p>Enter keywords, authors, or research topics to find relevant papers</p>
+                    <h3>{t('scholarSearch.welcomeTitle')}</h3>
+                    <p>{t('scholarSearch.welcomeDescription')}</p>
 
                     {localStorage.getItem('cerebras_api_key') && (
                         <div className="ai-enhancement-info">
@@ -513,7 +515,7 @@ export default function ScholarSearch({ onAddReference }) {
                                 <circle cx="10" cy="10" r="8" fill="rgba(99, 102, 241, 0.1)" stroke="currentColor" strokeWidth="1.5" />
                                 <path d="M10 6l2 4-2 4-2-4 2-4z" fill="currentColor" />
                             </svg>
-                            <p className="ai-enabled">✨ AI query augmentation enabled</p>
+                            <p className="ai-enabled">✨ {t('scholarSearch.aiAugmentationEnabled')}</p>
                         </div>
                     )}
                 </div>

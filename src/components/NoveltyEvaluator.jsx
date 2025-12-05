@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { extractPDFMetadata } from '../utils/pdfMetadata'
 import '../novelty-evaluator.css'
 
 export default function NoveltyEvaluator() {
+    const { t } = useTranslation()
     const [inputType, setInputType] = useState('text') // 'text', 'pdf', 'code'
     const [inputContent, setInputContent] = useState('')
     const [pdfFile, setPdfFile] = useState(null)
@@ -111,7 +113,7 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
 
     const handleEvaluate = async () => {
         if (!inputContent.trim()) {
-            setError('Please provide content to evaluate')
+            setError(t('noveltyEvaluator.provideContent'))
             return
         }
 
@@ -119,7 +121,7 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
         const geminiKey = localStorage.getItem('gemini_api_key')
 
         if (!cerebrasKey && !geminiKey) {
-            setError('Please configure either Cerebras or Gemini API key in Settings')
+            setError(t('noveltyEvaluator.configureApiKey'))
             return
         }
 
@@ -226,10 +228,10 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
                                 </linearGradient>
                             </defs>
                         </svg>
-                        Novelty Evaluator
+                        {t('noveltyEvaluator.title')}
                     </h1>
                     <p className="evaluator-subtitle">
-                        Brutal, honest assessment of research novelty by a top-tier journal editor
+                        {t('noveltyEvaluator.subtitle')}
                     </p>
                 </div>
 
@@ -241,7 +243,7 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
-                        Text
+                        {t('noveltyEvaluator.text')}
                     </button>
                     <button
                         className={`type-btn ${inputType === 'pdf' ? 'active' : ''}`}
@@ -251,7 +253,7 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
                             <path d="M9 1H4a1 1 0 00-1 1v12a1 1 0 001 1h8a1 1 0 001-1V5L9 1z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             <path d="M9 1v4h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                        PDF
+                        {t('noveltyEvaluator.pdf')}
                     </button>
                     <button
                         className={`type-btn ${inputType === 'code' ? 'active' : ''}`}
@@ -260,7 +262,7 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <path d="M5 11L2 8l3-3M11 5l3 3-3 3M9 2L7 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                        Code
+                        {t('noveltyEvaluator.code')}
                     </button>
                 </div>
             </div>
@@ -290,9 +292,9 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
                                         <path d="M21 28l2 2 4-4" stroke="rgb(34, 197, 94)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                     <h3>{pdfFile.name}</h3>
-                                    <p>PDF loaded successfully. Click "Evaluate" to analyze.</p>
+                                    <p>{t('noveltyEvaluator.pdfLoaded')}</p>
                                     <button className="btn-secondary mt-2" onClick={handleClear}>
-                                        Choose Different File
+                                        {t('noveltyEvaluator.chooseDifferentFile')}
                                     </button>
                                 </>
                             ) : (
@@ -301,8 +303,8 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
                                         <path d="M32 16v32M48 32H16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                                         <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="2" strokeDasharray="8 8" opacity="0.3" />
                                     </svg>
-                                    <h3>Drop PDF here or click to upload</h3>
-                                    <p>We'll extract the text and evaluate the novelty</p>
+                                    <h3>{t('noveltyEvaluator.dropPdfHere')}</h3>
+                                    <p>{t('noveltyEvaluator.extractText')}</p>
                                 </>
                             )}
                         </label>
@@ -312,8 +314,8 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
                         <textarea
                             className="evaluator-textarea"
                             placeholder={inputType === 'code'
-                                ? "Paste your code here, or drag & drop a code file...\n\nExample: Implementation of a new algorithm, novel architecture, etc."
-                                : "Paste your paper title, abstract, and key contributions here...\n\nExample:\nTitle: Deep Learning for X\nAbstract: This paper presents...\nContributions:\n1. Novel approach to...\n2. State-of-the-art results on..."}
+                                ? t('noveltyEvaluator.codePlaceholder')
+                                : t('noveltyEvaluator.textPlaceholder')}
                             value={inputContent}
                             onChange={(e) => setInputContent(e.target.value)}
                             onDragOver={handleDragOver}
@@ -322,8 +324,8 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
                         />
                         {inputContent && (
                             <div className="input-stats">
-                                <span>{inputContent.length} characters</span>
-                                <button className="btn-link" onClick={handleClear}>Clear</button>
+                                <span>{inputContent.length} {t('noveltyEvaluator.characters')}</span>
+                                <button className="btn-link" onClick={handleClear}>{t('noveltyEvaluator.clear')}</button>
                             </div>
                         )}
                     </div>
@@ -338,21 +340,21 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
                         {isEvaluating ? (
                             <>
                                 <div className="spinner-small"></div>
-                                Evaluating with AI...
+                                {t('noveltyEvaluator.evaluating')}
                             </>
                         ) : (
                             <>
                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                                     <path d="M10 2L12 8L18 10L12 12L10 18L8 12L2 10L8 8L10 2Z" fill="currentColor" />
                                 </svg>
-                                Evaluate Novelty
+                                {t('noveltyEvaluator.evaluate')}
                             </>
                         )}
                     </button>
 
                     {!localStorage.getItem('cerebras_api_key') && !localStorage.getItem('gemini_api_key') && (
                         <p className="api-warning">
-                            ⚠️ No API key configured. Please add either Cerebras or Gemini API key in Settings.
+                            ⚠️ {t('noveltyEvaluator.noApiKey')}
                         </p>
                     )}
                 </div>
@@ -375,9 +377,9 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
                                     <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
                                 </svg>
-                                Evaluation Complete
+                                {t('noveltyEvaluator.evaluationComplete')}
                             </h2>
-                            <button className="btn-icon" onClick={() => setEvaluation(null)} title="Close">
+                            <button className="btn-icon" onClick={() => setEvaluation(null)} title={t('noveltyEvaluator.close')}>
                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                                     <path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                                 </svg>
@@ -391,17 +393,17 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
                                 className="btn-secondary"
                                 onClick={() => {
                                     navigator.clipboard.writeText(evaluation)
-                                    alert('Evaluation copied to clipboard!')
+                                    alert(t('noveltyEvaluator.evaluationCopied'))
                                 }}
                             >
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                     <rect x="5" y="5" width="9" height="9" rx="1" stroke="currentColor" strokeWidth="1.5" />
                                     <path d="M3 11V3a1 1 0 011-1h8" stroke="currentColor" strokeWidth="1.5" />
                                 </svg>
-                                Copy to Clipboard
+                                {t('noveltyEvaluator.copyToClipboard')}
                             </button>
                             <button className="btn-primary" onClick={handleClear}>
-                                Evaluate Another
+                                {t('noveltyEvaluator.evaluateAnother')}
                             </button>
                         </div>
                     </div>
@@ -410,31 +412,31 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
 
             {!evaluation && !isEvaluating && (
                 <div className="evaluator-info">
-                    <h3>How it works</h3>
+                    <h3>{t('noveltyEvaluator.howItWorks')}</h3>
                     <div className="info-grid">
                         <div className="info-card">
                             <div className="info-icon">📄</div>
-                            <h4>1. Provide Content</h4>
-                            <p>Upload a PDF, paste text, or drop code files</p>
+                            <h4>{t('noveltyEvaluator.step1Title')}</h4>
+                            <p>{t('noveltyEvaluator.step1Description')}</p>
                         </div>
                         <div className="info-card">
                             <div className="info-icon">🤖</div>
-                            <h4>2. AI Analysis</h4>
-                            <p>Strict evaluation by simulated top-tier editor</p>
+                            <h4>{t('noveltyEvaluator.step2Title')}</h4>
+                            <p>{t('noveltyEvaluator.step2Description')}</p>
                         </div>
                         <div className="info-card">
                             <div className="info-icon">📊</div>
-                            <h4>3. Get Feedback</h4>
-                            <p>Honest assessment with actionable improvements</p>
+                            <h4>{t('noveltyEvaluator.step3Title')}</h4>
+                            <p>{t('noveltyEvaluator.step3Description')}</p>
                         </div>
                     </div>
                     <div className="evaluation-criteria">
-                        <h4>Evaluation Criteria</h4>
+                        <h4>{t('noveltyEvaluator.evaluationCriteriaTitle')}</h4>
                         <ul>
-                            <li>✓ New problem/setting that matters</li>
-                            <li>✓ Novel conceptual idea or principle</li>
-                            <li>✓ Deep evidence that changes understanding</li>
-                            <li>✓ New resource/tool that shifts the field</li>
+                            <li>✓ {t('noveltyEvaluator.criteria1')}</li>
+                            <li>✓ {t('noveltyEvaluator.criteria2')}</li>
+                            <li>✓ {t('noveltyEvaluator.criteria3')}</li>
+                            <li>✓ {t('noveltyEvaluator.criteria4')}</li>
                         </ul>
                     </div>
                 </div>
