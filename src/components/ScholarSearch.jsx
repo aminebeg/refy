@@ -1,7 +1,6 @@
-import {useState} from 'react'
-import {useTranslation} from 'react-i18next'
-import {enhanceSearchQuery} from '../utils/cerebrasService'
-import {getJournalRanking} from '../utils/journalRanking'
+import { useState } from 'react'
+import { enhanceSearchQueryWithOllama, checkOllamaStatus } from '../utils/ollamaService'
+import { getJournalRanking } from '../utils/journalRanking'
 
 export default function ScholarSearch({onAddReference}) {
     const {t} = useTranslation()
@@ -39,16 +38,19 @@ export default function ScholarSearch({onAddReference}) {
         setError(null)
 
         try {
-            const apiKey = localStorage.getItem('cerebras_api_key')
+            const model = localStorage.getItem('ollama_model') || 'deepseek'
             let queryToSearch = loadMore ? currentQuery : searchQuery
 
-            if (!loadMore && apiKey && apiKey.trim() && enableAI) {
+            if (!loadMore && enableAI) {
                 setIsEnhancing(true)
                 try {
-                    const enhancedQuery = await enhanceSearchQuery(apiKey.trim(), searchQuery)
-                    if (enhancedQuery && enhancedQuery !== searchQuery) {
-                        queryToSearch = enhancedQuery
-                        console.log('Enhanced query:', queryToSearch)
+                    const ollamaAvailable = await checkOllamaStatus(model)
+                    if (ollamaAvailable) {
+                        const enhancedQuery = await enhanceSearchQueryWithOllama(searchQuery, model)
+                        if (enhancedQuery && enhancedQuery !== searchQuery) {
+                            queryToSearch = enhancedQuery
+                            console.log('Enhanced query:', queryToSearch)
+                        }
                     }
                 } catch (aiError) {
                     console.warn('AI enhancement failed, using original query:', aiError)
@@ -518,14 +520,14 @@ export default function ScholarSearch({onAddReference}) {
                     <h3>{t('scholarSearch.welcomeTitle')}</h3>
                     <p>{t('scholarSearch.welcomeDescription')}</p>
 
-                    {localStorage.getItem('cerebras_api_key') && (
+                    {enableAI && (
                         <div className="ai-enhancement-info">
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                                 <circle cx="10" cy="10" r="8" fill="rgba(99, 102, 241, 0.1)" stroke="currentColor"
                                         strokeWidth="1.5"/>
                                 <path d="M10 6l2 4-2 4-2-4 2-4z" fill="currentColor"/>
                             </svg>
-                            <p className="ai-enabled">✨ {t('scholarSearch.aiAugmentationEnabled')}</p>
+                            <p className="ai-enabled">✨ AI query augmentation enabled (Ollama)</p>
                         </div>
                     )}
                 </div>

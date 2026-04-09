@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { extractPDFMetadata } from '../utils/pdfMetadata'
+import { analyzePaperWithOllama, checkOllamaStatus } from '../utils/ollamaService'
 import '../novelty-evaluator.css'
 
 export default function NoveltyEvaluator() {
@@ -117,11 +118,10 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
             return
         }
 
-        const cerebrasKey = localStorage.getItem('cerebras_api_key')
-        const geminiKey = localStorage.getItem('gemini_api_key')
-
-        if (!cerebrasKey && !geminiKey) {
-            setError(t('noveltyEvaluator.configureApiKey'))
+        const model = localStorage.getItem('ollama_model') || 'deepseek'
+        const ollamaAvailable = await checkOllamaStatus(model)
+        if (!ollamaAvailable) {
+            setError(`Ollama is not running or ${model} model is not loaded. Please start Ollama.`)
             return
         }
 
@@ -130,75 +130,12 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
         setEvaluation(null)
 
         try {
+            const { callOllama } = await import('../utils/ollamaService')
             const prompt = EVALUATION_PROMPT.replace('{CONTENT}', inputContent)
-
-            let evaluationText = null
-
-            // Try Cerebras first if key is available
-            if (cerebrasKey && cerebrasKey.trim()) {
-                const cerebrasModels = ['llama-3.3-70b', 'llama3.1-8b']
-
-                for (const model of cerebrasModels) {
-                    try {
-                        console.log(`Trying Cerebras model: ${model}`)
-                        const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${cerebrasKey.trim()}`
-                            },
-                            body: JSON.stringify({
-                                model: model,
-                                messages: [
-                                    {
-                                        role: 'user',
-                                        content: prompt
-                                    }
-                                ],
-                                temperature: 0.3,
-                                max_tokens: 2000
-                            })
-                        })
-
-                        if (response.ok) {
-                            const data = await response.json()
-                            evaluationText = data.choices?.[0]?.message?.content
-                            if (evaluationText) {
-                                console.log(`✅ Success with Cerebras model: ${model}`)
-                                break
-                            }
-                        } else if (response.status === 401) {
-                            throw new Error('Invalid Cerebras API key')
-                        }
-                    } catch (err) {
-                        console.warn(`Cerebras model ${model} failed:`, err.message)
-                        if (err.message.includes('Invalid')) throw err
-                    }
-                }
-            }
-
-            // If Cerebras failed or not available, try Gemini
-            if (!evaluationText && geminiKey && geminiKey.trim()) {
-                try {
-                    console.log('Trying Gemini API...')
-                    const { GoogleGenerativeAI } = await import('@google/generative-ai')
-                    const genAI = new GoogleGenerativeAI(geminiKey.trim())
-                    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-
-                    const result = await model.generateContent(prompt)
-                    evaluationText = result.response.text()
-                    console.log('✅ Success with Gemini')
-                } catch (err) {
-                    console.error('Gemini failed:', err)
-                    throw new Error(`Gemini API error: ${err.message}`)
-                }
-            }
-
-            if (!evaluationText) {
-                throw new Error('No evaluation returned from API. Please check your API keys.')
-            }
-
-            setEvaluation(evaluationText)
+            const result = await callOllama([
+                { role: "user", content: prompt }
+            ], { model, temperature: 0.6 })
+            setEvaluation(result)
         } catch (err) {
             console.error('Evaluation error:', err)
             setError(err.message || 'Failed to evaluate. Please try again.')
@@ -352,9 +289,9 @@ Abstract: ${metadata.abstract || 'No abstract available'}`
                         )}
                     </button>
 
-                    {!localStorage.getItem('cerebras_api_key') && !localStorage.getItem('gemini_api_key') && (
+                    {!localStorage.getItem('ollama_status_checked') && (
                         <p className="api-warning">
-                            ⚠️ {t('noveltyEvaluator.noApiKey')}
+                            ⚠️ Make sure Ollama is running locally with deepseek model.
                         </p>
                     )}
                 </div>

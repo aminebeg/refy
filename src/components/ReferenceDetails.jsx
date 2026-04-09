@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getPDFUrl, getPDFBlob, savePDF } from '../utils/pdfStorage'
 import { extractPDFMetadata } from '../utils/pdfMetadata'
 import TechnicalSheet from './TechnicalSheet'
+import PaperChat from './PaperChat'
 
 export default function ReferenceDetails({
     reference,
@@ -21,6 +22,7 @@ export default function ReferenceDetails({
     const [editedDoi, setEditedDoi] = useState(reference.doi || '')
     const [selectedCollections, setSelectedCollections] = useState(reference.collectionIds || [])
     const [showTechnicalSheet, setShowTechnicalSheet] = useState(false)
+    const [showPaperChat, setShowPaperChat] = useState(false)
 
     // Load PDF URL and filename from IndexedDB when component mounts
     useEffect(() => {
@@ -241,6 +243,16 @@ export default function ReferenceDetails({
                                 <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                             </svg>
                             Technical Review
+                        </button>
+                        <button
+                            className="btn btn-secondary"
+                            onClick={() => setShowPaperChat(true)}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M2 3h2l2-2h8l2 2h2a1 1 0 011 1v7a1 1 0 01-1 1H3a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M5 8v3m2-3v3m2-3v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            </svg>
+                            Chat About Paper
                         </button>
                         <button
                             className="btn btn-secondary"
@@ -589,6 +601,12 @@ export default function ReferenceDetails({
                     reference={reference}
                     onClose={() => setShowTechnicalSheet(false)}
                     onSave={onUpdate}
+                />
+            )}
+            {showPaperChat && (
+                <PaperChat
+                    reference={reference}
+                    onClose={() => setShowPaperChat(false)}
                 />
             )}
         </div>

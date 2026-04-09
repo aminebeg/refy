@@ -9,10 +9,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 /**
  * Extract text from a PDF file
  * @param {File|Blob} file - The PDF file to parse
- * @param {number} maxPages - Maximum number of pages to extract (default 15 to save tokens)
+ * @param {number} maxPages - Maximum number of pages to extract (default 100 to save tokens)
  * @returns {Promise<string>} Extracted text
  */
-export async function extractPDFText(file, maxPages = 15) {
+export async function extractPDFText(file, maxPages = 100) {
     try {
         // Read file as ArrayBuffer
         const arrayBuffer = await file.arrayBuffer();
